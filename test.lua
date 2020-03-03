@@ -44,7 +44,7 @@ function test()
         {
             ['num'] = 5,
             ['foo'] = 5.32,
-            ['nil_val'] = nil,
+            ['nil_val'] = nil, -- TODO how to handle nil values?
             ["key_str"] = "value_str"
         },
         {
@@ -64,8 +64,13 @@ function test()
         print("| " .. k .. " : " .. tohex(buf))
         -- should load tables without schema
         -- will be missing keys
-        decode(buf)
-       
+        local dec = decode(buf)
+        -- TODO should pretty print?
+        for k, v in pairs(dec) do
+            print("key: ".. k)
+            print(v)
+        end       
+        print("----")
     end
 end
 
