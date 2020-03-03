@@ -6,12 +6,22 @@ function assertEqual(v1, v2)
         error('got different types: ' .. t1 .." : "..  t2)
     end
 
-    -- TODO handle comparing tables
     if (v1 ~= v2) then
-        error('got different values: 0x' .. tohex(v1) .." : 0x" ..  tohex(v2))
-    end
-
-    
+        if (t1 == "table") then
+            -- recurse into both tables
+            for k, v in pairs(v1) do
+                
+                assertEqual(v1[k], v2[k])
+            end
+            for k, v in pairs(v2) do
+                if v1[k] == nil and v2[k] ~= nil then
+                    error('v1 is missing value for key '.. k)
+                end
+            end
+        else
+            error('got different values: 0x' .. v1 .." : 0x" ..  v2)
+        end
+    end    
 end
 
 function fromhex(str)

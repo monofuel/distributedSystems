@@ -32,6 +32,8 @@ require('./util')
 --   4 byte integer for size of string
 -- record - 0x11
 --   4 byte integer for # of bytes for table
+--   each entry in the record has a 1 byte ID for the key
+--   followed by an encoded value.
 
 local typeC = {
     ["nil"] = string.char(0x00),
@@ -78,6 +80,7 @@ function encode(v)
             -- TODO handle arrays
             -- TODO need to know schema to assign IDs for keys
 
+            -- if a schema isn't provided, assign IDs in order
             keyId = keyTab[k]
             if keyId == nil then
                 keyCount = keyCount + 1
@@ -134,7 +137,40 @@ function decode(buf)
         if (string.len(recBuf) ~= length) then
             error("Expected " .. length .. " bytes for record, found " .. string.len(recBuf))
         end
-        return nil
+        local tab = {}
+        while string.len(recBuf) > 0 do
+            -- if a schema is provided, use it to convert IDs to keys
+            -- otherwise use keys
+            local key = string.byte(recBuf, 1)
+            -- TODO schema
+
+            -- chomp off bytes based on type
+            local typeCode = string.sub(recBuf, 2, 2)
+            local length = 0;
+            if (typeCode == typeC['nil']) then
+                length = 0
+            elseif (typeCode == typeC['integer']) then
+                length = 4
+            elseif (typeCode == typeC['double']) then
+                length = 8
+            elseif(typeCode >= fromhex('10')) then
+                -- chomp off ${length} bytes
+                -- chomp chomp chomp chomp
+                local lengthBuf = string.sub(recBuf, 3, 6)
+                -- add 4 for the size of int
+                length = string.unpack("i", lengthBuf) + 4
+            else
+                error('unknown type code ' .. tohex(typeCode))
+            end
+
+            -- add 1 for key ID, and 1 for type code
+            length = length + 2
+            local subBuf = string.sub(recBuf, 2, length)
+            -- TODO pass sub schema through
+            tab[key] = decode(subBuf)
+            recBuf = string.sub(recBuf, 1 + length)
+        end
+        return tab
     else
         error('Unsupported Type: ' .. tohex(code))
     end
