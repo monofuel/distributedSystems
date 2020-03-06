@@ -9,5 +9,5 @@ stages:
 lua_test:
   stage: test
   script:
-    - lua -v
-    - make test
+    - lua5.3 -v
+    - lua5.3 test.lua
