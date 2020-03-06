@@ -48,7 +48,7 @@ local typeC = {
 
 
 -- returns a string of encoded bytes
-function encode(v)
+function encode(v, schema)
     local typeOf = type(v)
     if typeOf == 'nil' then
         return typeC['nil']

@@ -79,26 +79,35 @@ function test()
     end
 
 
-    validateSchema({
+    local testSchema1 = {
         ['type'] = 'foo',
         ['fields']= {
             {
                 ['name'] = 'bar1',
                 ['repeated'] = false,
-                ['type']= 'string'
+                ['type']= 'string',
+                ['id'] = 1,
             },
             {
                 ['name']= 'num1',
                 ['repeated']= false,
-                ['type']= 'integer'
+                ['type']= 'integer',
+                ['id'] = 2,
             },
             {
                 ['name']= 'num2',
                 ['repeated']= false,
-                ['type']= 'double'
+                ['type']= 'double',
+                ['id'] = 3,
             }
         }
-    })
+    }
+    validateSchema(testSchema1)
+    encode({
+        ['bar1']= 'stuff',
+        ['num1']= 5,
+        ['num2']= 3.3333,
+    }, testSchema1)
 end
 
 

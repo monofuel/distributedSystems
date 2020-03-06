@@ -18,11 +18,13 @@
 --   type: 'string', // name of the the schema
 --   fields: {
 --    
---     { name: 'string', repeated: boolean, type: 'string'}
+--     -- each ID must be unique!
+--     { name: 'string', repeated: boolean, type: 'string', id: number }
 --     ... repeated ...
 -- 
 --   }
 -- }
+-- type can be a table, for nested schemas
 
 function validateSchema(schema) 
     assert(type(schema) == 'table')
@@ -35,10 +37,16 @@ function validateSchema(schema)
         assert(type(v) == 'table')
 
         assert(type(v['name']) == 'string')
+        
+        -- TODO test that IDs are unique
+        assert(type(v['id']) == 'number')
         assert(type(v['repeated']) == 'boolean' or v['repeated'] == nil)
 
         -- TODO validate that type is a valid type
-        assert(type(v['type']) == 'string')
+        assert(type(v['type']) == 'string' or type(v['type']) == 'table')
 
+        if (type(v['type']) == 'table') then
+            validateSchema(v['type'])
+        end
     end
 end
