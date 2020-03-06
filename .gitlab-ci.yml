@@ -6,4 +6,5 @@ stages:
 lua_test:
   stage: test
   script:
+    - lua -v
     - lua test.lua
