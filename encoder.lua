@@ -1,6 +1,6 @@
 require('./util')
 
--- Schema
+-- lua types:
 --  "nil" | "number" | "string" | "boolean" | "table" | "function" | "thread" | "userdata"
 
 -- for each value:

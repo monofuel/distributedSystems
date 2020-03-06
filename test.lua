@@ -1,4 +1,5 @@
 require('./encoder')
+require('./schema')
 
 function test()
 
@@ -77,6 +78,27 @@ function test()
         -- TODO validate dec
     end
 
+
+    validateSchema({
+        ['type'] = 'foo',
+        ['fields']= {
+            {
+                ['name'] = 'bar1',
+                ['repeated'] = false,
+                ['type']= 'string'
+            },
+            {
+                ['name']= 'num1',
+                ['repeated']= false,
+                ['type']= 'integer'
+            },
+            {
+                ['name']= 'num2',
+                ['repeated']= false,
+                ['type']= 'double'
+            }
+        }
+    })
 end
 
 
