@@ -109,6 +109,7 @@ function test()
         ['num2']= 3.3333,
  
      }, testSchema1)
+     print(tohex(buf))
 
     -- assertEqual(buf,
     -- decode(fromhex('111D0000003510050000007374756666313804ED0DBE3099AA0A4031300305000000')), testSchema1)
