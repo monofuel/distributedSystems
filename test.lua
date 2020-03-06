@@ -65,13 +65,9 @@ function test()
         -- should load tables without schema
         -- will be missing keys
         local dec = decode(buf)
-        -- TODO should pretty print?
-        for k, v in pairs(dec) do
-            print("key: ".. k)
-            print(v)
-        end       
-        print("----")
+        -- TODO validate dec
     end
+
 end
 
 

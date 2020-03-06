@@ -1,12 +1,18 @@
 # Distributed Systems
 
-- project progress
-  - simple KV
-  - encoding
-  - next steps:
-    - TODO: lua coroutines? io multiplexing?
-    - replication
-    - cache proxies? orchestration?
+- simple KV
+- store
+
+- TODO
+
+  - replication
+  - partitioning
+  - transactions
+  - consistency
+
+- stretch goals
+  - lua coroutines? io multiplexing?
+  - cache proxies? orchestration?
 
 # Notes
 

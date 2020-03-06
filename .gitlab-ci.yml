@@ -1,0 +1,9 @@
+image: woahbase/alpine-lua
+
+stages:
+  - test
+
+lua_test:
+  stage: test
+  script:
+    - lua test.lua
