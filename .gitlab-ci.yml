@@ -1,4 +1,7 @@
-image: woahbase/alpine-lua
+image: alpine
+
+before_script:
+  - apk update && apk add build-base lua5.3
 
 stages:
   - test
@@ -7,4 +10,4 @@ lua_test:
   stage: test
   script:
     - lua -v
-    - lua test.lua
+    - make test
