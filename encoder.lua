@@ -184,10 +184,11 @@ function decode(buf)
             -- TODO pass sub schema through
             
             -- if tab[key] already has a value, handle it as an array
-            local is_array = tab[key] ~= nil or tab[key][1] ~= nil
-            if (is_array) then
+            
+            if (tab[key] ~= nil) then
                 local val =  decode(subBuf)
-                if tab[key][1] == nil then
+                -- check if it is already a table
+                if type(tab[key]) == 'table' and tab[key][1] ~= nil then
                     local old_val = tab[key]
                     tab[key] = {
                         old_val,
