@@ -83,7 +83,7 @@ function encode(v, schema)
             local key_code
             -- find the field in the schema
             if (schema ~= nil) then
-                for k5, v5, in pairs(schema['fields']) do
+                for k5, v5 in pairs(schema['fields']) do
                     if k == v5['name'] then
                         field = v5
                     end
@@ -108,16 +108,19 @@ function encode(v, schema)
 
             -- if a schema isn't provided, assign IDs in order
             
-            
+            local sub_schema = nil
+            if field ~= nil then
+                sub_schema = field['type']
+            end
 
             local is_array = type(v2) == 'table' and v2[1] ~= nil
             if (is_array) then
                 for k3, v3 in pairs(v2) do
-                    local value_buf = encode(v3, field['type'])
+                    local value_buf = encode(v3, sub_schema)
                     record = record .. key_code .. value_buf
                 end
             else
-                local value_buf = encode(v2, field['type'])
+                local value_buf = encode(v2, sub_schema)
                 record = record .. key_code .. value_buf
             end
             

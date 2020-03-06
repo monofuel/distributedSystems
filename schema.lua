@@ -17,7 +17,7 @@
 -- {
 --   type: 'string', // name of the the schema
 --   fields: {
---    
+--     -- TOOD required fields
 --     -- each ID must be unique!
 --     { name: 'string', repeated: boolean, type: 'string', id: number }
 --     ... repeated ...
@@ -37,7 +37,7 @@ function validateSchema(schema)
         assert(type(v) == 'table')
 
         assert(type(v['name']) == 'string')
-        
+
         -- TODO test that IDs are unique
         assert(type(v['id']) == 'number')
         assert(type(v['repeated']) == 'boolean' or v['repeated'] == nil)

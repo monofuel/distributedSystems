@@ -86,28 +86,32 @@ function test()
                 ['name'] = 'bar1',
                 ['repeated'] = false,
                 ['type']= 'string',
-                ['id'] = 1,
+                ['id'] = 5,
             },
             {
                 ['name']= 'num1',
                 ['repeated']= false,
                 ['type']= 'integer',
-                ['id'] = 2,
+                ['id'] = 10,
             },
             {
                 ['name']= 'num2',
                 ['repeated']= false,
                 ['type']= 'double',
-                ['id'] = 3,
+                ['id'] = 18,
             }
         }
     }
     validateSchema(testSchema1)
-    encode({
+    local buf = encode({
         ['bar1']= 'stuff',
         ['num1']= 5,
         ['num2']= 3.3333,
-    }, testSchema1)
+ 
+     }, testSchema1)
+
+    -- assertEqual(buf,
+    -- decode(fromhex('111D0000003510050000007374756666313804ED0DBE3099AA0A4031300305000000')), testSchema1)
 end
 
 
