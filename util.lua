@@ -3,7 +3,7 @@ function assertEqual(v1, v2)
     local t1 = type(v1)
     local t2 = type(v2)
     if (t1 ~= t2) then
-        error('got different types: ' .. t1 .." : "..  t2)
+        error('got different types: "' .. t1 ..'" : "'..  t2 .. '"')
     end
 
     if (v1 ~= v2) then
@@ -19,6 +19,8 @@ function assertEqual(v1, v2)
                 end
             end
         else
+            print(v1)
+            print(v2)
             error('got different values: 0x' .. v1 .." : 0x" ..  v2)
         end
     end    

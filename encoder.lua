@@ -32,8 +32,11 @@ require('./util')
 --   4 byte integer for size of string
 -- record - 0x11
 --   4 byte integer for # of bytes for table
+--   if a record has the key 1 it is assumed to be an array
+--     arrays must be stored in a record (cannot be top-level) 
 --   each entry in the record has a 1 byte ID for the key
 --   followed by an encoded value.
+--   Arrays are represented by repeating a record key multiple times
 
 local typeC = {
     ["nil"] = string.char(0x00),
@@ -77,7 +80,7 @@ function encode(v)
 
         for k, v2 in pairs(v) do
             -- append values to buffer
-            -- TODO handle arrays
+           
             -- TODO need to know schema to assign IDs for keys
 
             -- if a schema isn't provided, assign IDs in order
@@ -89,12 +92,24 @@ function encode(v)
             end
 
             local key_code = string.char(keyId)
+  
 
-            local value_buf = encode(v2)
-            record = record .. key_code .. value_buf
+            local is_array = type(v2) == 'table' and v2[1] ~= nil
+            if (is_array) then
+                for k3, v3 in pairs(v2) do
+                    local value_buf = encode(v3)
+                    record = record .. key_code .. value_buf
+                end
+            else
+                local value_buf = encode(v2)
+                record = record .. key_code .. value_buf
+            end
+            
+
         end
-
-           local length = intToBytes(string.len(record))
+        
+        local length = intToBytes(string.len(record))
+      
         return code .. length .. record
     else
         error('Unsupported Type: ' .. typeOf)
@@ -167,7 +182,23 @@ function decode(buf)
             length = length + 2
             local subBuf = string.sub(recBuf, 2, length)
             -- TODO pass sub schema through
-            tab[key] = decode(subBuf)
+            
+            -- if tab[key] already has a value, handle it as an array
+            local is_array = tab[key] ~= nil or tab[key][1] ~= nil
+            if (is_array) then
+                local val =  decode(subBuf)
+                if tab[key][1] == nil then
+                    local old_val = tab[key]
+                    tab[key] = {
+                        old_val,
+                       val
+                    }
+                else
+                    table.insert(tab, val)
+                end
+            else
+                tab[key] = decode(subBuf)
+            end
             recBuf = string.sub(recBuf, 1 + length)
         end
         return tab

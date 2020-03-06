@@ -12,7 +12,8 @@ function test()
     assertEqual(decode(fromhex('100100000061')), 'a')
     assertEqual(decode(fromhex('1003000000616263')), 'abc')
     assertEqual(encode("value_str"), fromhex('100900000076616C75655F737472'))
-
+    assertEqual(encode({ ['arr'] = { 1, 2, 3}}), fromhex('1112000000010301000000010302000000010303000000'))
+    
     local testData = {
         5,
         100,
@@ -56,6 +57,14 @@ function test()
                 ['nil_val'] = nil,
             },
             ["key_str"] = "value_str"
+        },
+        {
+            ['arr'] = {
+                1,
+                2,
+                3,
+                4,
+            }
         }
     
     }
