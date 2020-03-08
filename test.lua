@@ -136,11 +136,35 @@ function test()
     assertEqual(wal_ev.bytes, "")
     handle_wal_event(wal_ev)
 
-
+    local store = {
+        collection = {
+            {
+                key = 'foo',
+                value = 'bar'
+            },
+            {
+                key = 'foo2',
+                value = 5
+            },
+            {
+                key = 'foo3',
+                value = 5.44
+            }
+        }
+    }
+    local store_buf = encode(store, KV_Schema)
+    print(tohex(store_buf))
+    local store_dec = decode(store_buf, KV_Schema)
+    local count = 0
+    for k, v in pairs(store_dec.collection) do
+        count = count + 1
+        print(k .. " : " .. v)
+    end
+    -- assertEqual(count, 3)
 
 end
 
-function db_test()
+function io_test()
 
     local db_name = 'test'
     local dir = './test_db'
@@ -177,6 +201,10 @@ function db_test()
 
 end
 
+function db_test()
+    local store = KV_Store:new('test1')
+end
 
 test()
+io_test()
 db_test()

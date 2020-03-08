@@ -7,7 +7,7 @@ WAL_Kinds = {
     ['noop'] = 0,
     ['doom'] = 1,
     ['create'] = 2,
-    ['patch'] = 3,
+    -- ['patch'] = 3,
     ['delete'] = 4
 }
 
