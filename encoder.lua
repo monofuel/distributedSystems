@@ -98,7 +98,7 @@ function encode(v, schema)
                 if field == nil then
                     error('could not find ID for key: '.. k)
                 end
-                key_code = field['id']
+                key_code = string.char(field['id'])
             else
                 keyId = keyTab[k]
                 if keyId == nil then
@@ -144,7 +144,7 @@ function encode(v, schema)
 end
 
 -- takes in an encoded string of bytes and returns the value
-function decode(buf)
+function decode(buf, schema)
     if string.len(buf) < 1 then
         error('cannot decode empty buffer')
     end
@@ -163,6 +163,11 @@ function decode(buf)
             error("Expected 8 bytes for double, found " .. string.len(buf))
         end
         return string.unpack("d", buf)
+    elseif code == typeC['uuid'] then
+        if string.len(buf) ~= 16 then
+            error("Expected 16 bytes for uuid, found " .. string.len(buf))
+        end
+        return buf
     elseif code == typeC['string'] then
         local sub = string.sub(buf, 1, 4)
         local length = string.unpack("i", string.sub(buf, 1, 4))
@@ -182,8 +187,17 @@ function decode(buf)
         while string.len(recBuf) > 0 do
             -- if a schema is provided, use it to convert IDs to keys
             -- otherwise use keys
-            local key = string.byte(recBuf, 1)
-            -- TODO schema
+            local key = string.unpack("b", recBuf)
+            local sub_schema = nil
+            if schema ~= nil then
+                for k, v in pairs(schema['fields']) do
+                    if v['id'] == key  then
+                        key = v['name']
+                        sub_schema = v['type']
+                        break
+                    end
+                end
+            end
 
             -- chomp off bytes based on type
             local typeCode = string.sub(recBuf, 2, 2)
@@ -194,6 +208,8 @@ function decode(buf)
                 length = 4
             elseif (typeCode == typeC['double']) then
                 length = 8
+            elseif (typeCode == typeC['uuid']) then
+                length = 16
             elseif(typeCode >= fromhex('10')) then
                 -- chomp off ${length} bytes
                 -- chomp chomp chomp chomp
@@ -212,7 +228,7 @@ function decode(buf)
             -- if tab[key] already has a value, handle it as an array
             
             if (tab[key] ~= nil) then
-                local val =  decode(subBuf)
+                local val =  decode(subBuf, sub_schema)
                 -- check if it is already a table
                 if type(tab[key]) == 'table' and tab[key][1] ~= nil then
                     local old_val = tab[key]
@@ -224,7 +240,7 @@ function decode(buf)
                     table.insert(tab, val)
                 end
             else
-                tab[key] = decode(subBuf)
+                tab[key] = decode(subBuf, sub_schema)
             end
             recBuf = string.sub(recBuf, 1 + length)
         end

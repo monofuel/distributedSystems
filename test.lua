@@ -125,11 +125,16 @@ function test()
 
     local wal_noop = {
         ["ID"]= gen_uuid(),
-        ["kind"]= 'noop',
+        ["kind"]= WAL_Kinds['noop'],
         ['bytes']= ""
     }
     local wal_buf = encode(wal_noop, WAL_Schema)
     print(tohex(wal_buf))
+    local wal_ev = decode(wal_buf, WAL_Schema)
+    assertEqual(wal_ev["ID"], wal_noop['ID'])
+    assertEqual(wal_ev['kind'], 0)
+    assertEqual(wal_ev['bytes'], "")
+    handle_wal_event(wal_ev)
 end
 
 

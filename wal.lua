@@ -3,7 +3,7 @@ require("./util")
 
 -- Write Ahead Log
 
-local WAL_Kinds = {
+WAL_Kinds = {
     ['noop'] = 0,
     ['doom'] = 1,
     ['create'] = 2,
@@ -11,7 +11,7 @@ local WAL_Kinds = {
     ['delete'] = 4
 }
 
-local WAL_Schema = {
+WAL_Schema = {
     ["type"] = "WAL",
     ["fields"] = {
         {
@@ -39,7 +39,7 @@ validateSchema(WAL_Schema)
 
 function handle_wal_event(ev)
     if ev['kind'] == WAL_Kinds.noop then
-        print("NOOP Event: " .. tohex(ev.id))
+        print("NOOP Event: " .. tohex(ev['ID']))
         return
     else   
         print("ev handler not implemented: " .. ev.kind)
