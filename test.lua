@@ -1,5 +1,7 @@
 require('./encoder')
 require('./schema')
+require('./wal')
+require('./kv')
 
 function test()
 
@@ -111,8 +113,23 @@ function test()
      }, testSchema1)
      print(tohex(buf))
 
+     -- print(decode(buf))
+
     -- assertEqual(buf,
     -- decode(fromhex('111D0000003510050000007374756666313804ED0DBE3099AA0A4031300305000000')), testSchema1)
+
+
+    local id = gen_uuid()
+    print("UUID: " .. tohex(id))
+    assertEqual(string.len(id), 128 / 8)
+
+    local wal_noop = {
+        ["ID"]= gen_uuid(),
+        ["kind"]= 'noop',
+        ['bytes']= ""
+    }
+    local wal_buf = encode(wal_noop, WAL_Schema)
+    print(tohex(wal_buf))
 end
 
 

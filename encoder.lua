@@ -28,6 +28,8 @@ require('./util')
 --   constant size (4 byte integer)
 -- number (double) - 0x04
 --   constant size (8 byte double precision floating point)
+-- uuid - 0x05
+--   128 bit UUID
 -- string - 0x10
 --   4 byte integer for size of string
 -- record - 0x11
@@ -42,6 +44,7 @@ local typeC = {
     ["nil"] = string.char(0x00),
     ["integer"] = string.char(0x03),
     ["double"] = string.char(0x04),
+    ["uuid"] = string.char(0x05),
     ["string"] = string.char(0x10),
     ["record"] = string.char(0x11)
 }
@@ -64,7 +67,11 @@ function encode(v, schema)
         else
             error('invalid number type for ' .. v)
         end
-        
+    elseif schema == 'uuid' then
+        local buf = typeC['uuid']
+        assertEqual(string.len(v), 16)
+        buf = buf .. v
+        return buf
     elseif typeOf == 'string' then
         local buf = typeC['string']
         local length = intToBytes(string.len(v))

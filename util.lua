@@ -54,3 +54,13 @@ function intToBytes(n)
 
     return string.pack("i", n)
 end
+
+function gen_uuid()
+    local ret = ""
+    for i = 1,16 do
+        -- TODO: better randomness source?
+        local byte = math.random(256) - 1
+        ret = ret .. string.char(byte)
+    end
+    return ret
+end
