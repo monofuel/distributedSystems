@@ -157,11 +157,11 @@ function test()
     info(tohex(store_buf))
     local store_dec = decode(store_buf, KV_Schema)
     local count = 0
+    info(toPrettyPrint(store_dec))
     for k, v in pairs(store_dec.collection) do
         count = count + 1
-        info(k .. " : " .. v)
     end
-    -- assertEqual(count, 3)
+    assertEqual(count, 3)
 
 end
 

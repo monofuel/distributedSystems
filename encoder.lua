@@ -189,10 +189,12 @@ function decode(buf, schema)
             -- otherwise use keys
             local key = string.unpack("b", recBuf)
             local sub_schema = nil
+            local repeated = false
             if schema ~= nil then
                 for k, v in pairs(schema['fields']) do
                     if v['id'] == key  then
                         key = v['name']
+                        repeated = v['repeated']
                         sub_schema = v['type']
                         break
                     end
@@ -226,18 +228,27 @@ function decode(buf, schema)
             -- TODO pass sub schema through
             
             -- if tab[key] already has a value, handle it as an array
-            
-            if (tab[key] ~= nil) then
+            if (tab[key] ~= nil or repeated ) then
+  
                 local val =  decode(subBuf, sub_schema)
                 -- check if it is already a table
-                if type(tab[key]) == 'table' and tab[key][1] ~= nil then
+                if tab[key] == nil then
+                    -- if schema is repeated and table does not exist
+                    tab[key] = {
+                        val
+                    }
+                elseif (repeated or (type(tab[key]) == 'table' and tab[key][1] ~= nil)) then
+                    -- if table exists
+                    -- debug(toPrettyPrint(tab))
+                    table.insert(tab[key], val)
+                else
+                    -- if it is a value
                     local old_val = tab[key]
                     tab[key] = {
                         old_val,
                        val
                     }
-                else
-                    table.insert(tab, val)
+
                 end
             else
                 tab[key] = decode(subBuf, sub_schema)
