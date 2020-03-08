@@ -2,7 +2,7 @@ require('schema')
 
 -- Key Value Store
 
-local KV_File = {
+KV_Schema = {
     ['type'] = "KV",
     ['fields'] = {
         {
@@ -27,4 +27,5 @@ local KV_File = {
         }
     }
 }
-validateSchema(KV_File)
+validateSchema(KV_Schema)
+

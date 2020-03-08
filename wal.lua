@@ -41,6 +41,8 @@ function handle_wal_event(ev)
     if ev['kind'] == WAL_Kinds.noop then
         print("NOOP Event: " .. tohex(ev['ID']))
         return
+    elseif ev['kind'] == WAL_Kinds.doom then
+        assert(false, "DOOM")
     else   
         print("ev handler not implemented: " .. ev.kind)
     end
