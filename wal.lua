@@ -1,14 +1,15 @@
 require("./schema")
 require("./util")
+require('./logging')
 
 -- Write Ahead Log
 
 WAL_Kinds = {
-    ['noop'] = 0,
-    ['doom'] = 1,
-    ['create'] = 2,
+    noop = 0,
+    doom = 1,
+    create = 2,
     -- ['patch'] = 3,
-    ['delete'] = 4
+    delete = 4
 }
 
 WAL_Schema = {
@@ -39,7 +40,7 @@ validateSchema(WAL_Schema)
 
 function handle_wal_event(ev)
     if ev['kind'] == WAL_Kinds.noop then
-        print("NOOP Event: " .. tohex(ev['ID']))
+        info("NOOP Event: " .. tohex(ev['ID']))
         return
     elseif ev['kind'] == WAL_Kinds.doom then
         assert(false, "DOOM")

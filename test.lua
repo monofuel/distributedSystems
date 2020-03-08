@@ -2,6 +2,7 @@ require('./encoder')
 require('./schema')
 require('./wal')
 require('./kv')
+require('./logging')
 
 function test()
 
@@ -29,7 +30,7 @@ function test()
     }
     for k,v in pairs(testData) do
         local buf = encode(v)
-        print("| " .. k .. " : " .. tohex(buf))
+        info(k .. " : " .. tohex(buf))
         local dec = decode(buf)
         -- assert v == dec for basic types
         assertEqual(v, dec)
@@ -73,7 +74,7 @@ function test()
     }
     for k,v in pairs(tables) do
         local buf = encode(v)
-        print("| " .. k .. " : " .. tohex(buf))
+        info( k .. " : " .. tohex(buf))
         -- should load tables without schema
         -- will be missing keys
         local dec = decode(buf)
@@ -111,7 +112,7 @@ function test()
         num2 = 3.3333,
  
      }, testSchema1)
-     print(tohex(buf))
+     info(tohex(buf))
 
      -- print(decode(buf))
 
@@ -120,7 +121,7 @@ function test()
 
 
     local id = gen_uuid()
-    print("UUID: " .. tohex(id))
+    info("UUID: " .. tohex(id))
     assertEqual(string.len(id), 128 / 8)
 
     local wal_noop = {
@@ -129,7 +130,7 @@ function test()
         bytes = ""
     }
     local wal_buf = encode(wal_noop, WAL_Schema)
-    print(tohex(wal_buf))
+    info('WAL ' .. tohex(wal_buf))
     local wal_ev = decode(wal_buf, WAL_Schema)
     assertEqual(wal_ev.ID, wal_noop.ID)
     assertEqual(wal_ev.kind, 0)
@@ -153,12 +154,12 @@ function test()
         }
     }
     local store_buf = encode(store, KV_Schema)
-    print(tohex(store_buf))
+    info(tohex(store_buf))
     local store_dec = decode(store_buf, KV_Schema)
     local count = 0
     for k, v in pairs(store_dec.collection) do
         count = count + 1
-        print(k .. " : " .. v)
+        info(k .. " : " .. v)
     end
     -- assertEqual(count, 3)
 
@@ -195,7 +196,7 @@ function io_test()
     local wal_file = io.open(wal_filepath, "w+")
     -- local db_file = io.open(db_filepath, "w+")
 
-    print(tohex(wal_buf))
+    info(tohex(wal_buf))
     wal_file:write(wal_buf)
 
 
