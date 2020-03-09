@@ -5,6 +5,7 @@
 
 - TODO
 
+  - argument checking
   - replication
   - partitioning
   - transactions

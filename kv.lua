@@ -6,7 +6,7 @@ KV_Schema = {
     type = "KV",
     fields = {
         {
-            name = 'collection',
+            name = 'table',
             id = 1,
             repeated = true,
             type = {
@@ -32,8 +32,9 @@ validateSchema(KV_Schema)
 KV_Store = {}
 function KV_Store:new(name)
     local store = setmetatable({}, { __index = KV_Store })
-    KV_Store.collections = {}
-    KV_Store.WAL = {}
+    store.tables = {}
+    store.WAL = {}
+    return store
 end
 
 --[[
@@ -45,6 +46,13 @@ end
 ]]
 
 function KV_Store:exec(cmd)
+    local tokens = tokenize(cmd)
+    if #tokens == 0 then
+        error('invalid number of tokens')
+    end
+    if tokens[0] == 'PING' then
+        return 'PONG'
+    end
 end
 
 

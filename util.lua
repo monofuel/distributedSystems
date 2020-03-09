@@ -64,3 +64,25 @@ function gen_uuid()
     end
     return ret
 end
+
+function tokenize(str)
+    -- TODO handle escaped quotes
+    local res = {}
+    local quoted_str = nil
+    for sub_str in string.gmatch(str, '[^ ]*') do
+        if string.match(sub_str, "^\"") then
+            quoted_str = sub_str
+        elseif quoted_str ~= nil then
+            quoted_str = quoted_str .. " " .. sub_str
+        else
+            table.insert(res, sub_str)
+        end
+
+        if string.match(sub_str, "\"$") then
+            table.insert(res, quoted_str)
+            quoted_str = nil
+        end
+        
+    end
+    return res
+end

@@ -138,7 +138,7 @@ function test()
     handle_wal_event(wal_ev)
 
     local store = {
-        collection = {
+        table = {
             {
                 key = 'foo',
                 value = 'bar'
@@ -156,12 +156,8 @@ function test()
     local store_buf = encode(store, KV_Schema)
     info(tohex(store_buf))
     local store_dec = decode(store_buf, KV_Schema)
-    local count = 0
     info(toPrettyPrint(store_dec))
-    for k, v in pairs(store_dec.collection) do
-        count = count + 1
-    end
-    assertEqual(count, 3)
+    assertEqual(#store_dec.table, 3)
 
 end
 
@@ -204,8 +200,31 @@ end
 
 function db_test()
     local store = KV_Store:new('test1')
+    local res = ''
+    res = store:exec("PING")
+    assertEqual(res, "PONG")
+
+    res = store:exec('PING "hello world"')
+    assertEqual(res, '"hello world"')
+
+    -- res = store:exec("GET foo")
+    -- assertEqual(res, "key does not exist")
+end
+
+function token_test()
+
+    local res = ''
+    res = tokenize("PING")
+    -- debug(toPrettyPrint(res))
+    res = tokenize('PING "hello world"')
+    debug(toPrettyPrint(res))
+    res = tokenize('GET foobar')
+
+    res = tokenize('SET foo bar')
+    res = tokenize('SET foo "hello world"')
 end
 
 test()
 io_test()
+token_test()
 db_test()
