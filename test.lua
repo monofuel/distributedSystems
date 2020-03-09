@@ -207,21 +207,36 @@ function db_test()
     res = store:exec('PING "hello world"')
     assertEqual(res, '"hello world"')
 
-    -- res = store:exec("GET foo")
-    -- assertEqual(res, "key does not exist")
+    res = store:exec("GET foo")
+    assertEqual(res, nil)
+
+    res = store:exec("SET foo \"hello world\"")
+    assertEqual(res, "SET foo")
+
+    res = store:exec("GET foo")
+    assertEqual(res, "\"hello world\"")
+
+    res = store:exec("DELETE foo")
+    assertEqual(res, "DEL foo")
+
+    res = store:exec("GET foo")
+    assertEqual(res, nil)
 end
 
 function token_test()
 
     local res = ''
     res = tokenize("PING")
-    -- debug(toPrettyPrint(res))
+    assertEqual(res, { "PING" })
     res = tokenize('PING "hello world"')
-    debug(toPrettyPrint(res))
+    assertEqual(res, { "PING", "\"hello world\"" })
     res = tokenize('GET foobar')
+    assertEqual(res, { "GET", "foobar" })
 
     res = tokenize('SET foo bar')
+    assertEqual(res, { "SET", "foo", "bar" })
     res = tokenize('SET foo "hello world"')
+    assertEqual(res, { "SET", "foo", "\"hello world\"" })
 end
 
 test()
