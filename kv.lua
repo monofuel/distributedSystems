@@ -68,9 +68,13 @@ function KV_Store:new(args)
         store.db_file = io.open(store.db_filepath, 'w')
     else 
         store.wal_file = io.open(store.wal_filepath, 'a')
-        store.db_file = io.open(store.db_filepath, 'w')
-        -- TODO
-        -- load DB and wal from file
+        store.db_file = io.open(store.db_filepath, 'r+')
+        -- TODO load DB
+        local db_buf = store.db_file:read("*a")
+        debug(tohex(db_buf))
+        -- local db = decode(db_buf, KV_Schema)
+
+        -- TODO catch up WAL
 
     end
 

@@ -230,6 +230,10 @@ function db_test()
 
     store:flush()
     store:close()
+
+    -- load DB back in
+    local store2 = KV_Store:new({ name = 'test1', reset = false })
+    store2:close()
 end
 
 function token_test()
