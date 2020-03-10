@@ -138,18 +138,23 @@ function test()
     handle_wal_event(wal_ev)
 
     local store = {
-        table = {
+        tables = {
             {
-                key = 'foo',
-                value = 'bar'
-            },
-            {
-                key = 'foo2',
-                value = 5
-            },
-            {
-                key = 'foo3',
-                value = 5.44
+                name = 'default',
+                entries = {
+                    {
+                        key = 'foo',
+                        value = 'bar'
+                    },
+                    {
+                        key = 'foo2',
+                        value = 5
+                    },
+                    {
+                        key = 'foo3',
+                        value = 5.44
+                    }
+                }
             }
         }
     }
@@ -157,7 +162,8 @@ function test()
     info(tohex(store_buf))
     local store_dec = decode(store_buf, KV_Schema)
     info(toPrettyPrint(store_dec))
-    assertEqual(#store_dec.table, 3)
+    assertEqual(store_dec.tables[1].name, 'default')
+    assertEqual(#store_dec.tables[1].entries, 3)
 
 end
 
@@ -221,6 +227,8 @@ function db_test()
 
     res = store:exec("GET foo")
     assertEqual(res, nil)
+
+    store:flush()
 end
 
 function token_test()

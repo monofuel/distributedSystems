@@ -1,26 +1,42 @@
-require('schema')
-
+require('./schema')
+require('./util')
 -- Key Value Store
 
 KV_Schema = {
     type = "KV",
     fields = {
         {
-            name = 'table',
+            name = 'tables',
             id = 1,
             repeated = true,
             type = {
-                type = 'entry',
-                fields = {
+                type = "tableT",
+                fields =  {
                     {
-                        name = "key",
+                        name = 'name',
                         id = 1,
-                        type = "string"
+                        repeated = false,
+                        type = 'string'
                     },
                     {
-                        name = "value",
+                        name = 'entries',
                         id = 2,
-                        type = "any"
+                        repeated = true,
+                        type = {
+                            type = 'entryT',
+                            fields = {
+                                {
+                                    name = "key",
+                                    id = 1,
+                                    type = "string"
+                                },
+                                {
+                                    name = "value",
+                                    id = 2,
+                                    type = "any"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -36,6 +52,7 @@ function KV_Store:new(name)
         default = {}
     }
     store.WAL = {}
+    store.name = name
     return store
 end
 
@@ -47,6 +64,7 @@ end
     DELETE key
 ]]
 
+-- TODO parsing complex values
 function KV_Store:exec(cmd)
     local tokens = tokenize(cmd)
     if #tokens == 0 then
@@ -82,4 +100,26 @@ function KV_Store:exec(cmd)
     end
 end
 
+-- commit a WAL event to the log, and mutate internal state
+function KV_Store:writeWAL(ev)
 
+    local buf = encode(ev, WAL_Schema)
+    local wal_filepath = './test_db/' .. self.name .. '.wal'
+    local wal_file = io.open(db_filepath, 'a')
+    wal_file:write(buf)
+end
+
+function KV_Store:flush()
+    local tables = {}
+    for name, entries in pairs(self.tables) do
+        table.insert(tables, {
+            name = name,
+            entries = entries
+        })
+    end
+
+    local buf = encode({ tables = tables }, KV_Schema)
+    local db_filepath = './test_db/' .. self.name .. '.bin'
+    local db_file = io.open(db_filepath, 'w+')
+    db_file:write(buf)
+end
