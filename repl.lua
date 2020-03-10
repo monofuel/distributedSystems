@@ -7,11 +7,15 @@ function repl()
     for line in io.lines() do
         if line == 'exit' then
             break
+        elseif line == 'reset' then
+            store = KV_Store:new({ name = 'test2', reset = true })
+        else
+            local res = store:exec(line)
+            print(res)
         end
-        local res = store:exec(line)
-        print(res)
         io.write('> ')
     end
+    store:close()
 
 end
 

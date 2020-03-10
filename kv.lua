@@ -1,5 +1,8 @@
 require('./schema')
+require('./wal')
 require('./util')
+require('./encoder')
+
 -- Key Value Store
 
 KV_Schema = {
@@ -49,7 +52,7 @@ KV_Store = {}
 function KV_Store:new(args)
     local name = args.name
     local reset = args.reset == true
-    
+
     local store = setmetatable({}, { __index = KV_Store })
     store.tables = {
         default = {}
@@ -64,9 +67,11 @@ function KV_Store:new(args)
         store.wal_file = io.open(store.wal_filepath, 'w')
         store.db_file = io.open(store.db_filepath, 'w')
     else 
-        -- TODO
         store.wal_file = io.open(store.wal_filepath, 'a')
         store.db_file = io.open(store.db_filepath, 'w')
+        -- TODO
+        -- load DB and wal from file
+
     end
 
     return store
@@ -141,7 +146,14 @@ end
 
 function KV_Store:flush()
     local tables = {}
-    for name, entries in pairs(self.tables) do
+    for name, tab in pairs(self.tables) do
+        local entries = {}
+        for k, v in pairs(tab) do
+            table.insert(entries, {
+                key = k,
+                value = v
+            })
+        end
         table.insert(tables, {
             name = name,
             entries = entries
@@ -154,6 +166,8 @@ function KV_Store:flush()
 end
 
 function KV_Store:close()
+    self:flush()
+
     self.wal_file:close()
     self.db_file:close()
 end
