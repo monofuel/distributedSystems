@@ -205,7 +205,7 @@ function io_test()
 end
 
 function db_test()
-    local store = KV_Store:new('test1')
+    local store = KV_Store:new({ name = 'test1', reset = true})
     local res = ''
     res = store:exec("PING")
     assertEqual(res, "PONG")
@@ -229,6 +229,7 @@ function db_test()
     assertEqual(res, nil)
 
     store:flush()
+    store:close()
 end
 
 function token_test()

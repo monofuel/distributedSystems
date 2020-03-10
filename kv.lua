@@ -46,13 +46,29 @@ KV_Schema = {
 validateSchema(KV_Schema)
 
 KV_Store = {}
-function KV_Store:new(name)
+function KV_Store:new(args)
+    local name = args.name
+    local reset = args.reset == true
+    
     local store = setmetatable({}, { __index = KV_Store })
     store.tables = {
         default = {}
     }
     store.WAL = {}
     store.name = name
+
+    store.wal_filepath = './test_db/' .. store.name .. '.wal'
+    store.db_filepath = './test_db/' .. store.name .. '.bin'
+
+    if reset == true then
+        store.wal_file = io.open(store.wal_filepath, 'w')
+        store.db_file = io.open(store.db_filepath, 'w')
+    else 
+        -- TODO
+        store.wal_file = io.open(store.wal_filepath, 'a')
+        store.db_file = io.open(store.db_filepath, 'w')
+    end
+
     return store
 end
 
@@ -81,6 +97,10 @@ function KV_Store:exec(cmd)
         local key = tokens[2]
         local value = tokens[3]
         -- TODO WAL
+        self:writeWAL('set', {
+            key = key,
+            value = encode(value),
+        })
         tab[key] = value
         return 'SET ' .. key
     elseif tokens[1] == 'GET' then
@@ -101,12 +121,22 @@ function KV_Store:exec(cmd)
 end
 
 -- commit a WAL event to the log, and mutate internal state
-function KV_Store:writeWAL(ev)
+function KV_Store:writeWAL(kind, value)
 
-    local buf = encode(ev, WAL_Schema)
-    local wal_filepath = './test_db/' .. self.name .. '.wal'
-    local wal_file = io.open(db_filepath, 'a')
-    wal_file:write(buf)
+    -- TODO kind schemas
+    local schema = WAL_Schemas[kind]
+    if schema == nil then
+        error('unknown schema: ' .. kind)
+    end
+    local value_buf = encode(value, schema)
+    local buf = encode({
+        ID = gen_uuid(),
+        kind = WAL_Kinds[kind],
+        bytes = value_buf
+    }, WAL_Schema)
+    self.wal_file:write(buf)
+    self.wal_file:flush()
+    -- TODO mutate state
 end
 
 function KV_Store:flush()
@@ -119,7 +149,11 @@ function KV_Store:flush()
     end
 
     local buf = encode({ tables = tables }, KV_Schema)
-    local db_filepath = './test_db/' .. self.name .. '.bin'
-    local db_file = io.open(db_filepath, 'w+')
-    db_file:write(buf)
+    self.db_file:write(buf)
+    self.db_file:flush()
+end
+
+function KV_Store:close()
+    self.wal_file:close()
+    self.db_file:close()
 end

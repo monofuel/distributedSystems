@@ -2,7 +2,7 @@ require('./kv')
 require('./logging')
 
 function repl()
-    local store = KV_Store:new('test2')
+    local store = KV_Store:new({ name = 'test2', reset = false})
     io.write('> ')
     for line in io.lines() do
         if line == 'exit' then
