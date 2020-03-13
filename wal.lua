@@ -49,6 +49,11 @@ WAL_Set_Schema = {
             name = 'value',
             id = 2,
             type = 'string' -- encoded bytes
+        },
+        {
+            name = "table",
+            id = 3,
+            type = "string"
         }
     }
 }

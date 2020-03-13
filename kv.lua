@@ -63,6 +63,9 @@ function KV_Store:new(args)
     store.tables = {
         default = {}
     }
+    store.table_state = {
+        default = 0
+    }
     store.WAL = {}
     store.name = name
 
@@ -83,6 +86,8 @@ function KV_Store:new(args)
         for k1, v1 in pairs(db.tables) do
             local name = v1.name
             local entries = v1.entries
+            store.table_state[name] = v1.state
+
             store.tables[name] = {}
             local tab = store.tables[name]
             for k2, v2 in pairs(entries) do
@@ -123,12 +128,13 @@ function KV_Store:exec(cmd)
         local tab = self.tables.default;
         local key = tokens[2]
         local value = tokens[3]
-        -- TODO WAL
+
         self:writeWAL('set', {
             key = key,
+            table = 'default',
+            -- TODO hmmm
             value = encode(value),
         })
-        tab[key] = value
         return 'SET ' .. key
     elseif tokens[1] == 'GET' then
         local tab = self.tables.default;
@@ -149,22 +155,26 @@ end
 
 -- commit a WAL event to the log, and mutate internal state
 function KV_Store:writeWAL(kind, value)
-
     -- TODO kind schemas
     local schema = WAL_Schemas[kind]
     if schema == nil then
         error('unknown schema: ' .. kind)
     end
-    -- TODO get current ID
+    -- validateSchema(value, schema)
+    
+    local state = self.table_state[value.table] + 1
+    self.table_state[value.table] = state
+
     local value_buf = encode(value, schema)
     local buf = encode({
-        ID = gen_uuid(),
+        ID = state,
         kind = WAL_Kinds[kind],
         bytes = value_buf
     }, WAL_Schema)
     self.wal_file:write(buf)
     self.wal_file:flush()
-    -- TODO mutate state
+
+    self:handleWAL(kind, value)
 end
 
 function KV_Store:replayWAL()
@@ -173,6 +183,16 @@ function KV_Store:replayWAL()
 
     -- check if the DB is in check with the WAL
     -- catch up DB to WAL if behind
+end
+
+function KV_Store:handleWAL(kind, ev)
+    -- TODO mutate state
+    if kind == 'set' then
+        local tab = self.tables[ev.table]
+        tab[ev.key] = decode(ev.value)
+    else
+        error('event not implemented: ' .. kind)
+    end
 end
 
 function KV_Store:flush()
