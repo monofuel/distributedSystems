@@ -132,7 +132,6 @@ function KV_Store:exec(cmd)
         self:writeWAL('set', {
             key = key,
             table = 'default',
-            -- TODO hmmm
             value = encode(value),
         })
         return 'SET ' .. key
@@ -145,8 +144,10 @@ function KV_Store:exec(cmd)
     elseif tokens[1] == 'DELETE' then
         local tab = self.tables.default;
         local key = tokens[2]
-        -- TODO WAL
-        tab[key] = nil
+        self:writeWAL('delete', {
+            key = key,
+            table = 'default',
+        })
         return 'DEL ' .. key
     else
         return 'unknown command: ' .. tokens[1]
@@ -160,7 +161,6 @@ function KV_Store:writeWAL(kind, value)
     if schema == nil then
         error('unknown schema: ' .. kind)
     end
-    -- validateSchema(value, schema)
     
     local state = self.table_state[value.table] + 1
     self.table_state[value.table] = state
@@ -186,10 +186,13 @@ function KV_Store:replayWAL()
 end
 
 function KV_Store:handleWAL(kind, ev)
-    -- TODO mutate state
+
     if kind == 'set' then
         local tab = self.tables[ev.table]
         tab[ev.key] = decode(ev.value)
+    elseif kind == 'delete' then
+        local tab = self.tables[ev.table]
+        tab[ev.key] = nil
     else
         error('event not implemented: ' .. kind)
     end

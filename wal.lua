@@ -59,8 +59,27 @@ WAL_Set_Schema = {
 }
 validateSchema(WAL_Set_Schema)
 
+WAL_Delete_Schema = {
+    type = 'WAL_Delete',
+    fields = {
+        {
+            name = 'key',
+            id = 1,
+            type = 'string'
+        },
+        {
+            name = "table",
+            id = 2,
+            type = "string"
+        }
+    }
+}
+validateSchema(WAL_Delete_Schema)
+
+
 WAL_Schemas = {
-    set = WAL_Set_Schema
+    set = WAL_Set_Schema,
+    delete = WAL_Delete_Schema
 }
 
 
