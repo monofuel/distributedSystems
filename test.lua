@@ -125,7 +125,7 @@ function test()
     assertEqual(string.len(id), 128 / 8)
 
     local wal_noop = {
-        ID = gen_uuid(),
+        ID = 1,
         kind = WAL_Kinds.noop,
         bytes = ""
     }
@@ -177,13 +177,13 @@ function io_test()
 
     local wal = {
         {
-            ID = gen_uuid(),
+            ID = 1,
             kind = WAL_Kinds.noop,
             bytes = ""
         },
         {
 
-            ID = gen_uuid(),
+            ID = 2,
             kind = WAL_Kinds.create,
             bytes = ""
         }

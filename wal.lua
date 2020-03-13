@@ -18,7 +18,7 @@ WAL_Schema = {
         {
             name = "ID",
             id = 1,
-            type = "uuid"
+            type = "integer"
         },
         {
             -- WAL_Kinds
@@ -61,7 +61,7 @@ WAL_Schemas = {
 
 function handle_wal_event(ev)
     if ev['kind'] == WAL_Kinds.noop then
-        info("NOOP Event: " .. tohex(ev['ID']))
+        info("NOOP Event: " .. ev['ID'])
         return
     elseif ev['kind'] == WAL_Kinds.doom then
         assert(false, "DOOM")

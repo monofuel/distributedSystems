@@ -22,6 +22,12 @@ KV_Schema = {
                         type = 'string'
                     },
                     {
+                        name = 'state',
+                        id = 3,
+                        repeated = false,
+                        type = 'number'
+                    },
+                    {
                         name = 'entries',
                         id = 2,
                         repeated = true,
@@ -67,6 +73,7 @@ function KV_Store:new(args)
         store.wal_file = io.open(store.wal_filepath, 'w')
         store.db_file = io.open(store.db_filepath, 'w')
     else 
+        -- TODO read in WAL
         store.wal_file = io.open(store.wal_filepath, 'a')
         store.db_file = io.open(store.db_filepath, 'r+')
 
@@ -84,7 +91,8 @@ function KV_Store:new(args)
                 tab[key] = value
             end
         end
-        -- TODO catch up WAL
+
+        store:replayWAL()
 
     end
 
@@ -147,6 +155,7 @@ function KV_Store:writeWAL(kind, value)
     if schema == nil then
         error('unknown schema: ' .. kind)
     end
+    -- TODO get current ID
     local value_buf = encode(value, schema)
     local buf = encode({
         ID = gen_uuid(),
@@ -156,6 +165,14 @@ function KV_Store:writeWAL(kind, value)
     self.wal_file:write(buf)
     self.wal_file:flush()
     -- TODO mutate state
+end
+
+function KV_Store:replayWAL()
+
+    -- TODO
+
+    -- check if the DB is in check with the WAL
+    -- catch up DB to WAL if behind
 end
 
 function KV_Store:flush()
