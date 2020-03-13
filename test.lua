@@ -228,11 +228,16 @@ function db_test()
     res = store:exec("GET foo")
     assertEqual(res, nil)
 
+    res = store:exec("SET foo2 \"hello world!\"")
+    assertEqual(res, "SET foo2")
+
     store:flush()
     store:close()
 
     -- load DB back in
     local store2 = KV_Store:new({ name = 'test1', reset = false })
+    res = store2:exec("GET foo2")
+    assertEqual(res, "\"hello world!\"")
     store2:close()
 end
 

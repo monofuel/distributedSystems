@@ -69,11 +69,21 @@ function KV_Store:new(args)
     else 
         store.wal_file = io.open(store.wal_filepath, 'a')
         store.db_file = io.open(store.db_filepath, 'r+')
-        -- TODO load DB
-        local db_buf = store.db_file:read("*a")
-        debug(tohex(db_buf))
-        -- local db = decode(db_buf, KV_Schema)
 
+        local db_buf = store.db_file:read("*a")
+        local db = decode(db_buf, KV_Schema)
+        
+        for k1, v1 in pairs(db.tables) do
+            local name = v1.name
+            local entries = v1.entries
+            store.tables[name] = {}
+            local tab = store.tables[name]
+            for k2, v2 in pairs(entries) do
+                local key = v2.key
+                local value = v2.value
+                tab[key] = value
+            end
+        end
         -- TODO catch up WAL
 
     end
@@ -165,6 +175,9 @@ function KV_Store:flush()
     end
 
     local buf = encode({ tables = tables }, KV_Schema)
+    -- TODO could write to a new file, then swap them
+    self.db_file:close()
+    self.db_file = io.open(self.db_filepath, 'w')
     self.db_file:write(buf)
     self.db_file:flush()
 end
