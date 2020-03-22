@@ -3,6 +3,7 @@ require('./schema')
 require('./wal')
 require('./kv')
 require('./logging')
+require('./util')
 
 function test()
 
@@ -30,7 +31,7 @@ function test()
     }
     for k,v in pairs(testData) do
         local buf = encode(v)
-        info(k .. " : " .. tohex(buf))
+        logInfo(k .. " : " .. tohex(buf))
         local dec = decode(buf)
         -- assert v == dec for basic types
         assertEqual(v, dec)
@@ -74,7 +75,7 @@ function test()
     }
     for k,v in pairs(tables) do
         local buf = encode(v)
-        info( k .. " : " .. tohex(buf))
+        logInfo( k .. " : " .. tohex(buf))
         -- should load tables without schema
         -- will be missing keys
         local dec = decode(buf)
@@ -112,7 +113,7 @@ function test()
         num2 = 3.3333,
  
      }, testSchema1)
-     info(tohex(buf))
+     logInfo(tohex(buf))
 
      -- print(decode(buf))
 
@@ -121,7 +122,7 @@ function test()
 
 
     local id = gen_uuid()
-    info("UUID: " .. tohex(id))
+    logInfo("UUID: " .. tohex(id))
     assertEqual(string.len(id), 128 / 8)
 
     local wal_noop = {
@@ -130,7 +131,7 @@ function test()
         bytes = ""
     }
     local wal_buf = encode(wal_noop, WAL_Schema)
-    info('WAL ' .. tohex(wal_buf))
+    logInfo('WAL ' .. tohex(wal_buf))
     local wal_ev = decode(wal_buf, WAL_Schema)
     assertEqual(wal_ev.ID, wal_noop.ID)
     assertEqual(wal_ev.kind, 0)
@@ -159,9 +160,9 @@ function test()
         }
     }
     local store_buf = encode(store, KV_Schema)
-    info(tohex(store_buf))
+    logInfo(tohex(store_buf))
     local store_dec = decode(store_buf, KV_Schema)
-    info(toPrettyPrint(store_dec))
+    logInfo(toPrettyPrint(store_dec))
     assertEqual(store_dec.tables[1].name, 'default')
     assertEqual(#store_dec.tables[1].entries, 3)
 
@@ -195,10 +196,10 @@ function io_test()
         wal_buf = wal_buf .. buf
     end
 
-    local wal_file = io.open(wal_filepath, "w+")
-    -- local db_file = io.open(db_filepath, "w+")
+    local wal_file = io.open(wal_filepath, "wb")
+    -- local db_file = io.open(db_filepath, "wb")
 
-    info(tohex(wal_buf))
+    logInfo(tohex(wal_buf))
     wal_file:write(wal_buf)
 
 
@@ -239,6 +240,26 @@ function db_test()
     res = store2:exec("GET foo2")
     assertEqual(res, "\"hello world!\"")
     store2:close()
+
+    -- -- TODO test WAL when saving/loading
+    -- local store3 = KV_Store:new({ name = 'test3', reset = true })
+    -- store3.exec('SET foo3 "Hello World"' )
+    -- -- foo
+    -- local value_buf = encode({
+    --     key = 'foo3',
+    --     value = encode('Hello World 2'),
+    --     table = 'default'
+    -- }, WAL_Schemas[set])
+    -- local buf = encode({
+    --     ID = 2,
+    --     kind = 'set',
+    --     bytes = value_buf
+    -- }, WAL_Schema)
+    -- store.wal_file:write(buf)
+    -- store.wal_file:flush()
+
+    -- TODO test loading
+    -- stuff
 end
 
 function token_test()

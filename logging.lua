@@ -1,19 +1,19 @@
 require('./config')
 
 
-function debug(str)
+function logDebug(str)
     log('DEBUG', str)
 end
 
-function info(str)
+function logInfo(str)
     log('INFO', str)
 end
 
-function err(str)
+function logErr(str)
     log('ERR', str)
 end
 
-function warn(str)
+function logWarn(str)
     log('WARN', str)
 end
 

@@ -239,7 +239,7 @@ function decode(buf, schema)
                     }
                 elseif (repeated or (type(tab[key]) == 'table' and tab[key][1] ~= nil)) then
                     -- if table exists
-                    -- debug(toPrettyPrint(tab))
+                    -- logDebug(toPrettyPrint(tab))
                     table.insert(tab[key], val)
                 else
                     -- if it is a value

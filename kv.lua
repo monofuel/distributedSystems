@@ -58,6 +58,8 @@ KV_Store = {}
 function KV_Store:new(args)
     local name = args.name
     local reset = args.reset == true
+    local in_memory = args.in_memory == true
+
 
     local store = setmetatable({}, { __index = KV_Store })
     store.tables = {
@@ -68,37 +70,39 @@ function KV_Store:new(args)
     }
     store.WAL = {}
     store.name = name
+    store.__in_memory = in_memory
 
     store.wal_filepath = './test_db/' .. store.name .. '.wal'
     store.db_filepath = './test_db/' .. store.name .. '.bin'
+    if not in_memory then
+        if reset == true then
+            store.wal_file = io.open(store.wal_filepath, 'wb')
+            store.db_file = io.open(store.db_filepath, 'wb')
+        else 
+            -- TODO read in WAL
+            store.wal_file = io.open(store.wal_filepath, 'ab')
+            store.db_file = io.open(store.db_filepath, 'rb')
 
-    if reset == true then
-        store.wal_file = io.open(store.wal_filepath, 'w')
-        store.db_file = io.open(store.db_filepath, 'w')
-    else 
-        -- TODO read in WAL
-        store.wal_file = io.open(store.wal_filepath, 'a')
-        store.db_file = io.open(store.db_filepath, 'r+')
+            local db_buf = store.db_file:read("*a")
+            local db = decode(db_buf, KV_Schema)
 
-        local db_buf = store.db_file:read("*a")
-        local db = decode(db_buf, KV_Schema)
-        
-        for k1, v1 in pairs(db.tables) do
-            local name = v1.name
-            local entries = v1.entries
-            store.table_state[name] = v1.state
+            for k1, v1 in pairs(db.tables) do
+                local name = v1.name
+                local entries = v1.entries
+                store.table_state[name] = v1.state
 
-            store.tables[name] = {}
-            local tab = store.tables[name]
-            for k2, v2 in pairs(entries) do
-                local key = v2.key
-                local value = v2.value
-                tab[key] = value
+                store.tables[name] = {}
+                local tab = store.tables[name]
+                for k2, v2 in pairs(entries) do
+                    local key = v2.key
+                    local value = v2.value
+                    tab[key] = value
+                end
             end
+
+            store:replayWAL()
+
         end
-
-        store:replayWAL()
-
     end
 
     return store
@@ -171,9 +175,10 @@ function KV_Store:writeWAL(kind, value)
         kind = WAL_Kinds[kind],
         bytes = value_buf
     }, WAL_Schema)
-    self.wal_file:write(buf)
-    self.wal_file:flush()
-
+    if not self.__in_memory then
+        self.wal_file:write(buf)
+        self.wal_file:flush()
+    end
     self:handleWAL(kind, value)
 end
 
@@ -199,6 +204,10 @@ function KV_Store:handleWAL(kind, ev)
 end
 
 function KV_Store:flush()
+    if self.__in_memory then
+        print("Skipping flush for in-memory DB")
+        return
+    end
     local tables = {}
     for name, tab in pairs(self.tables) do
         local entries = {}
@@ -224,7 +233,8 @@ end
 
 function KV_Store:close()
     self:flush()
-
-    self.wal_file:close()
-    self.db_file:close()
+    if not self.__in_memory then
+        self.wal_file:close()
+        self.db_file:close()
+    end
 end

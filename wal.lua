@@ -85,7 +85,7 @@ WAL_Schemas = {
 
 function handle_wal_event(ev)
     if ev['kind'] == WAL_Kinds.noop then
-        info("NOOP Event: " .. ev['ID'])
+        logInfo("NOOP Event: " .. ev['ID'])
         return
     elseif ev['kind'] == WAL_Kinds.doom then
         assert(false, "DOOM")

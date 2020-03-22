@@ -1,0 +1,10 @@
+RESET
+PING
+PING "hello world"
+GET foo
+SET foo "hello world"
+GET foo
+SET foo "hello world!"
+GET foo
+DELETE foo
+EXIT
