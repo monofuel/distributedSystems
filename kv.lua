@@ -59,9 +59,18 @@ function KV_Store:new(args)
     local name = args.name
     local reset = args.reset == true
     local in_memory = args.in_memory == true
-    local port = args.port
-    if port == nil then
-        port = 25600
+    local leader_port = args.leader_port
+    if leader_port == nil then
+        leader_port = 25600
+    end
+
+    local repl_port = args.repl_port
+    if repl_port == nil then
+        repl_port = 25601
+    end
+    local leader_host = args.leader_host
+    if not leader_host then
+        leader_host = 'localhost'
     end
 
 
@@ -75,7 +84,9 @@ function KV_Store:new(args)
     store.WAL = {}
     store.name = name
     store.__in_memory = in_memory
-    store.__port = port
+    store.__leader_port = leader_port
+    store.__repl_port = repl_port
+    store.__leader_host = leader_host
 
     store.wal_filepath = './test_db/' .. store.name .. '.wal'
     store.db_filepath = './test_db/' .. store.name .. '.bin'
@@ -135,8 +146,9 @@ function KV_Store:listen()
     -- lua computers communicate via network components, and can't use socket
     local socket = require('socket')
 
-    local server = assert(socket.bind("*", self.__port))
-    logDebug('Listening to port ' .. self.__port)
+    -- TODO handle leader & repl ports
+    local server = assert(socket.bind("*", self.__leader_port))
+    logDebug('Listening to port ' .. self.__leader_port)
     server:settimeout(1)
 
     self.__server = server;
@@ -144,18 +156,18 @@ function KV_Store:listen()
     local sockets = {
         server
     }
-
+    self.__sockets = sockets;
     return coroutine.create(function()
         while 1 do
             
-            local ready = socket.select(sockets, nil, 1) 
+            local ready = socket.select(sockets, nil, 0.2) 
 
             for _, sock in pairs(ready) do
                 if sock == server then
                     local client, err = sock:accept()
                     if client then
                         logInfo("client connected!")
-                        sockets.insert(client)
+                        table.insert(sockets,client)
                     end
                 else
                     -- handle client message
@@ -184,14 +196,14 @@ function KV_Store:follow()
     -- lua computers communicate via network components, and can't use socket
     local socket = require('socket')
 
-    -- TODO don't hard code this stuff
-    local client, err = socket.connect('leader', 25600)
+    local client, err = socket.connect(self.__leader_host, self.__leader_port)
     if err then
         error('failed to connect to leader: ' .. err)
     end
     logInfo('connected to leader!')
     self.__client = client
     local sockets = { client }
+    self.__sockets = sockets
     return coroutine.create(function()
         while 1 do
             
@@ -368,6 +380,12 @@ function KV_Store:flush()
 end
 
 function KV_Store:close()
+    local sockets = self.__sockets
+    if sockets then
+        for _, sock in pairs(sockets) do
+            sock:close()
+        end
+    end
     self:flush()
     if not self.__in_memory then
         self.wal_file:close()

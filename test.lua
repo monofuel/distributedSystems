@@ -286,7 +286,41 @@ function token_test()
     assertEqual(res, { "SET", "foo", "\"hello world\"" })
 end
 
+function net_test()
+   
+    local leader = KV_Store:new({
+        name = 'leader',
+        in_memory = true,
+        reset = true,
+        leader_port = 25600,
+        role = 'leader',
+        repl_port = 25601
+    })
+    local follower = KV_Store:new({
+        name = 'follower',
+        in_memory = true,
+        reset = true,
+        leader_port = 25600,
+        role = 'follower',
+        repl_port = 25602,
+        leader_host = 'localhost'
+    })
+
+    local server_routine = leader:listen()
+    local client_routine = follower:follow()
+
+    
+    logDebug('resuming coroutines')
+    coroutine.resume(server_routine)
+    coroutine.resume(client_routine)
+        
+    if #leader.__sockets ~= 2 then
+        error("expected client to connect. # of sockets should be 2: " .. #leader.__sockets)
+    end
+end
+
 test()
 io_test()
 token_test()
 db_test()
+net_test()

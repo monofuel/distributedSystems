@@ -7,14 +7,14 @@ services:
       - .:/code/
   follower-1:
     build: .
-    command: lua5.3 server.lua --name compose-follower --role follower
+    command: lua5.3 server.lua --name compose-follower-1 --role follower --leader_host leader
     depends_on:
       - leader
     volumes:
       - .:/code/
   follower-2:
     build: .
-    command: lua5.3 server.lua --name compose-follower --role follower
+    command: lua5.3 server.lua --name compose-follower-2 --role follower --leader_host leader
     depends_on:
       - leader
     volumes:

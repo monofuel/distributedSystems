@@ -93,8 +93,10 @@ function parseArgs()
         name = "repl_test",
         in_memory = false,
         reset = false,
-        port = 25600,
-        role = 'leader'
+        leader_port = 25600,
+        repl_port = 25601,
+        role = 'leader',
+        leader_host = 'localhost'
     }
    
     if #arg > 0 then
@@ -116,23 +118,37 @@ function parseArgs()
                     end
                     options.name = arg[i]
                     skip_one = true
-                elseif a == "--port" then
+                elseif a == "--leader_port" then
                     i = i + 1
                     if arg[i] == nil then
-                        error("Missing port number following --port")
+                        error("Missing port number following --leader_port")
                     end
-                    options.port = tonumber(arg[i])
+                    options.leader_port = tonumber(arg[i])
+                    skip_one = true
+                elseif a == "--leader_host" then
+                    i = i + 1
+                    if arg[i] == nil then
+                        error("Missing hostname following --leader_host")
+                    end
+                    options.leader_host = arg[i]
+                    skip_one = true
+                elseif a == "--repl_port" then
+                    i = i + 1
+                    if arg[i] == nil then
+                        error("Missing port number following --repl_port")
+                    end
+                    options.repl_port = tonumber(arg[i])
                     skip_one = true
                 elseif a == "--role" then
-                i = i + 1
-                if arg[i] == nil then
-                    error("Missing [leader, follower] following --role")
-                end
-                options.role = arg[i]
-                if options.role ~= 'leader' and options.role ~= 'follower' then
-                    error('invalid role: ' .. options.role)
-                end
-                skip_one = true
+                    i = i + 1
+                    if arg[i] == nil then
+                        error("Missing [leader, follower] following --role")
+                    end
+                    options.role = arg[i]
+                    if options.role ~= 'leader' and options.role ~= 'follower' then
+                        error('invalid role: ' .. options.role)
+                    end
+                    skip_one = true
                 end
             end
         end
