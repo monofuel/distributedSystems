@@ -316,8 +316,8 @@ function net_test()
     routineResume(follower_routine)
         
     -- sockets should be [leader_server, repl_server, client]
-    if #leader.__sockets ~= 3 then
-        error("expected client to connect. # of sockets should be 3: " .. #leader.__sockets)
+    if #leader.__db_clients ~= 1 then
+        error("expected client to connect. # of db_clients should be 1: " .. #leader.__db_clients)
     end
 
     -- TODO OpenComputers Networking

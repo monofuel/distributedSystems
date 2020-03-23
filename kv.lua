@@ -178,10 +178,12 @@ function KV_Store:listen()
     local db_clients = {}
     local repl_clients = {}
 
-    self.__sockets = sockets;
+    self.__sockets = sockets
+    self.__db_clients = db_clients
+    self.__repl_clients = repl_clients
     return coroutine.create(function()
         while 1 do
-            local ready = socket.select(sockets, nil, 0.2) 
+            local ready = socket.select(sockets, nil, 0) 
 
             for _, sock in ipairs(ready) do
                 if sock == leader_server then
@@ -192,7 +194,6 @@ function KV_Store:listen()
                     else
                         logInfo("db client connected!")
                  
-                        table.insert(sockets, client)
                         table.insert(db_clients, client)
                     end
                 elseif sock == repl_server then
@@ -203,16 +204,16 @@ function KV_Store:listen()
                     else
                         logInfo("repl client connected!")
 
-                        table.insert(sockets,client)
                         table.insert(repl_clients, client)
                     end
-                else
-                    -- TODO handle sending WAL objects over network
-                    -- not sure how to handle that with sock:receive
-                    -- it only has *a, *l and number
+                end
+            end
 
-                    -- handle client message
-                    local line, err = sock:receive('*l')
+            ready = socket.select(repl_clients, nil, 0) 
+
+            for _, sock in ipairs(ready) do
+                -- REPL clients
+                local line, err = sock:receive('*l')
                     if err then
                         logErr('error receiving from repl client: ' .. err)
                     else
@@ -221,14 +222,18 @@ function KV_Store:listen()
                         sock:send(res .. '\n')
                         
                     end
-                end
             end
 
-            -- local line, err = client:receive()
-            -- if not err then 
-            
-            -- end
-            -- client:close()
+            ready = socket.select(db_clients, nil, 0) 
+
+            for _, sock in ipairs(ready) do
+                -- DB clients
+
+                 -- TODO handle sending WAL objects over network
+                    -- not sure how to handle that with sock:receive
+                    -- it only has *a, *l and number
+            end
+
             coroutine.yield()
         end
     end)
