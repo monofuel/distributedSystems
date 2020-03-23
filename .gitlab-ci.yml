@@ -1,7 +1,7 @@
 image: alpine
 
 before_script:
-  - apk update && apk add build-base lua5.3 luarocks
+  - apk update && apk add build-base lua5.3-dev lua5.3 luarocks
   - luarocks-5.3 install luasocket
 
 stages:
