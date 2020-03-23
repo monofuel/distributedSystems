@@ -5,7 +5,14 @@ services:
     command: lua5.3 server.lua --name compose-leader --role leader
     volumes:
       - .:/code/
-  follower:
+  follower-1:
+    build: .
+    command: lua5.3 server.lua --name compose-follower --role follower
+    depends_on:
+      - leader
+    volumes:
+      - .:/code/
+  follower-2:
     build: .
     command: lua5.3 server.lua --name compose-follower --role follower
     depends_on:
