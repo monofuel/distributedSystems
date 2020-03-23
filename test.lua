@@ -308,16 +308,53 @@ function net_test()
 
     local server_routine = leader:listen()
     local client_routine = follower:follow()
-
     
     logDebug('resuming coroutines')
-    coroutine.resume(server_routine)
-    coroutine.resume(client_routine)
+    routineResume(server_routine)
+    routineResume(client_routine)
         
     -- sockets should be [leader_server, repl_server, client]
     if #leader.__sockets ~= 3 then
         error("expected client to connect. # of sockets should be 3: " .. #leader.__sockets)
     end
+
+    -- TODO OpenComputers Networking
+    local socket = require('socket')
+
+    -- connect to leader REPL
+    local client, err = socket.connect('localhost', 25601)
+    if err then
+        error('failed to connect to leader REPL: ' .. err)
+    end
+    client:settimeout(1)
+    
+    logDebug('connected to leader REPL')
+    routineResume(server_routine)
+    client:send('PING\n')
+    
+    routineResume(server_routine)
+    local line, err = client:receive('*l')
+    if err then
+        error('client receive error: ' .. err)
+    end
+    assertEqual(line, "PONG")
+
+    client:send('SET FOO 0x123456\n')
+    routineResume(server_routine)
+    local line, err = client:receive('*l')
+    if err then
+        error('client receive error: ' .. err)
+    end
+    assertEqual(line, "SET FOO")
+
+    client:send('GET FOO\n')
+    routineResume(server_routine)
+    local line, err = client:receive('*l')
+    if err then
+        error('client receive error: ' .. err)
+    end
+    assertEqual(line, "0x123456")
+
 end
 
 test()

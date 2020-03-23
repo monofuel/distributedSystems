@@ -147,6 +147,8 @@ end
 
 function KV_Store:listen()
 
+    -- TODO maybe could just listen on 1 port everything?
+
     -- TODO support open computers
     -- lua computers communicate via network components, and can't use socket
     local socket = require('socket')
@@ -179,13 +181,15 @@ function KV_Store:listen()
     self.__sockets = sockets;
     return coroutine.create(function()
         while 1 do
-            
             local ready = socket.select(sockets, nil, 0.2) 
 
-            for _, sock in pairs(ready) do
+            for _, sock in ipairs(ready) do
                 if sock == leader_server then
                     local client, err = sock:accept()
-                    if client then
+                   
+                    if err then
+                        logErr('error accepting follower: ' .. err)
+                    else
                         logInfo("db client connected!")
                  
                         table.insert(sockets, client)
@@ -193,23 +197,29 @@ function KV_Store:listen()
                     end
                 elseif sock == repl_server then
                     local client, err = sock:accept()
-                    if client then
+
+                    if err then
+                        logErr('error accepting repl client: ' .. err)
+                    else
                         logInfo("repl client connected!")
 
                         table.insert(sockets,client)
                         table.insert(repl_clients, client)
                     end
                 else
+                    -- TODO handle sending WAL objects over network
+                    -- not sure how to handle that with sock:receive
+                    -- it only has *a, *l and number
+
                     -- handle client message
-                    local line, err = sock:receive()
+                    local line, err = sock:receive('*l')
                     if err then
-                        print(err)
+                        logErr('error receiving from repl client: ' .. err)
                     else
-                        print('client '.. sock.type ..' : ', line)
-                        if sock.type == 'repl' then
-                            local res = self:exec(line)
-                            sock:send(res)
-                        end
+                        logInfo('client request: ' .. line)
+                        local res = self:exec(line)
+                        sock:send(res .. '\n')
+                        
                     end
                 end
             end

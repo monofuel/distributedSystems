@@ -163,3 +163,16 @@ function parseArgs()
     end
     return options
 end
+
+
+function routineResume(routine, msg)
+    if not msg then
+        msg = ''
+    else
+        msg = msg .. ' : '
+    end
+    local _, err = coroutine.resume(routine)
+    if err then
+        logErr(msg .. err)
+    end
+end
