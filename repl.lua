@@ -19,14 +19,13 @@ function repl()
         -- TODO connect
         io.write('> ')
         for line in io.lines() do
-            
             if line == 'EXIT' then
                 break
             else
-                client:send(line)
-                local line, error = client:receive()
-                if error then
-                    error('client receive error: ' .. error)
+                client:send(line .. '\n')
+                local line, error = client:receive('*l')
+                if err then
+                    error('client receive error: ' .. err)
                 end
                 print(line)
             end

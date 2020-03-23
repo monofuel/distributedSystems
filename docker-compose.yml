@@ -26,6 +26,13 @@ services:
       - leader
     volumes:
       - .:/code/
+  repl-follower:
+    build: .
+    command: lua5.3 repl.lua  --remote follower-1
+    depends_on:
+      - follower-1
+    volumes:
+      - .:/code/
   test:
     build: .
     command: lua5.3 test.lua

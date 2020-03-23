@@ -8,15 +8,14 @@
   - Networking not working yet for Open Computers
     - currently only supports luasockets on x86
     - need to add support for the network on Open Computers
+  - replication with syncronous leader & follower
 
 * TODO
 
   - Finish implementing WAL recovery after crash
 
   - function argument checking?
-  - replication
 
-    - syncronous leader & follower
     - maybe async leader & follower?
 
 * stretch goals
@@ -25,6 +24,12 @@
     - partitioning with transactions?
   - lua coroutines? io multiplexing?
   - cache proxies? orchestration?
+
+# Manual Testing
+
+- `docker-compose up leader follower-1 follower-2` to start the servers
+- `docker-compose run repl` to open up a REPL for the leader
+- `docker-compose run repl-follower` to open up a REPL for follower-1
 
 # Notes
 

@@ -214,8 +214,14 @@ function KV_Store:listen()
             for _, sock in ipairs(ready) do
                 -- REPL clients
                 local line, err = sock:receive('*l')
+                
                     if err then
-                        logErr('error receiving from repl client: ' .. err)
+                        if err == 'closed' then
+                            logErr('client closed')
+                            table.remove(repl_clients, sock)
+                        else
+                            logErr('error receiving from repl client: ' .. err)
+                        end
                     else
                         logInfo('client request: ' .. line)
                         local res = self:exec(line)
@@ -228,10 +234,8 @@ function KV_Store:listen()
 
             for _, sock in ipairs(ready) do
                 -- DB clients
-
-                 -- TODO handle sending WAL objects over network
-                    -- not sure how to handle that with sock:receive
-                    -- it only has *a, *l and number
+                -- TODO should handle populating followers on startup
+                 
             end
 
             coroutine.yield()
