@@ -75,33 +75,49 @@ function KV_Store:new(args)
     store.wal_filepath = './test_db/' .. store.name .. '.wal'
     store.db_filepath = './test_db/' .. store.name .. '.bin'
     if not in_memory then
+        logDebug("backing db by file")
         if reset == true then
+            logDebug("resetting DB")
             store.wal_file = io.open(store.wal_filepath, 'wb')
             store.db_file = io.open(store.db_filepath, 'wb')
         else 
+            logDebug("reading in DB state from disk")
             -- TODO read in WAL
             store.wal_file = io.open(store.wal_filepath, 'ab')
             store.db_file = io.open(store.db_filepath, 'rb')
+            
 
-            local db_buf = store.db_file:read("*a")
-            local db = decode(db_buf, KV_Schema)
+            local db_buf = nil
+            if store.db_file ~= nil then
+                db_buf = store.db_file:read("*a")
+            end
+            if db_buf ~= nil then
+                local db = decode(db_buf, KV_Schema)
 
-            for k1, v1 in pairs(db.tables) do
-                local name = v1.name
-                local entries = v1.entries
-                store.table_state[name] = v1.state
+                for k1, v1 in pairs(db.tables) do
+                    local name = v1.name
+                    local entries = v1.entries
+                    store.table_state[name] = v1.state
 
-                store.tables[name] = {}
-                local tab = store.tables[name]
-                for k2, v2 in pairs(entries) do
-                    local key = v2.key
-                    local value = v2.value
-                    tab[key] = value
+                    store.tables[name] = {}
+                    local tab = store.tables[name]
+                    for k2, v2 in pairs(entries) do
+                        local key = v2.key
+                        local value = v2.value
+                      
+                        tab[key] = value
+                    end
                 end
             end
 
             store:replayWAL()
-
+            
+            -- re-open DB file for writing
+            if store.db_file ~= nil then
+                store.db_file:close()
+            end
+            store.db_file = io.open(store.db_filepath, 'ab')
+            store.db_file:seek("set")
         end
     end
 
@@ -131,19 +147,42 @@ function KV_Store:exec(cmd)
     elseif tokens[1] == 'SET' then
         local tab = self.tables.default;
         local key = tokens[2]
-        local value = tokens[3]
+        local value_str = tokens[3]
+        local value = nil
+        
+
+        if string.match(value_str, "^[0-9]+$") or string.match(value_str, "^[0-9]+\\.[0-9]+$") then -- Integer or floating point
+            value = encode(tonumber(value_str))
+        elseif string.match(value_str, "^0x[0-9a-fA-F]+$") then -- hex
+            local buf = fromhex(value_str:sub(3))
+            value = encode(buf, 'binary')
+        else
+            value = encode(value_str)
+        end
 
         self:writeWAL('set', {
             key = key,
             table = 'default',
-            value = encode(value),
+            value = value,
         })
+       
         return 'SET ' .. key
     elseif tokens[1] == 'GET' then
         local tab = self.tables.default;
         local key = tokens[2]
         local value = tab[key]
-        return value
+        if value == nil then
+            return nil
+        end
+        
+        local code = string.sub(value,1,1)
+     
+        value = decode(value)
+        if code == string.char(0x12) then
+            return '0x' .. tohex(value)
+        else 
+            return value
+        end
         
     elseif tokens[1] == 'DELETE' then
         local tab = self.tables.default;
@@ -194,7 +233,7 @@ function KV_Store:handleWAL(kind, ev)
 
     if kind == 'set' then
         local tab = self.tables[ev.table]
-        tab[ev.key] = decode(ev.value)
+        tab[ev.key] = ev.value
     elseif kind == 'delete' then
         local tab = self.tables[ev.table]
         tab[ev.key] = nil
@@ -205,7 +244,7 @@ end
 
 function KV_Store:flush()
     if self.__in_memory then
-        print("Skipping flush for in-memory DB")
+        logDebug("Skipping flush for in-memory DB")
         return
     end
     local tables = {}
@@ -224,7 +263,7 @@ function KV_Store:flush()
     end
 
     local buf = encode({ tables = tables }, KV_Schema)
-    -- TODO could write to a new file, then swap them
+    -- TODO could write to a new file, then swap them to prevent corruption from incomplete writes
     self.db_file:close()
     self.db_file = io.open(self.db_filepath, 'w')
     self.db_file:write(buf)

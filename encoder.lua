@@ -39,6 +39,9 @@ require('./util')
 --   each entry in the record has a 1 byte ID for the key
 --   followed by an encoded value.
 --   Arrays are represented by repeating a record key multiple times
+-- binary - 0x12
+--   4 byte integer for size of binary array (essentially like string)
+
 
 local typeC = {
     ["nil"] = string.char(0x00),
@@ -46,7 +49,8 @@ local typeC = {
     ["double"] = string.char(0x04),
     ["uuid"] = string.char(0x05),
     ["string"] = string.char(0x10),
-    ["record"] = string.char(0x11)
+    ["record"] = string.char(0x11),
+    ["binary"] = string.char(0x12),
 }
 
 
@@ -72,6 +76,11 @@ function encode(v, schema)
         assertEqual(string.len(v), 16)
         buf = buf .. v
         return buf
+    elseif typeOf == 'string' and schema == 'binary' then
+        local buf = typeC['binary']
+        local length = intToBytes(string.len(v))
+        buf = buf .. length
+        return buf .. v
     elseif typeOf == 'string' then
         local buf = typeC['string']
         local length = intToBytes(string.len(v))
@@ -168,7 +177,7 @@ function decode(buf, schema)
             error("Expected 16 bytes for uuid, found " .. string.len(buf))
         end
         return buf
-    elseif code == typeC['string'] then
+    elseif code == typeC['string'] or code == typeC['binary'] then
         local sub = string.sub(buf, 1, 4)
         local length = string.unpack("i", string.sub(buf, 1, 4))
         

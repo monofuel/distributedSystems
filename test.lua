@@ -232,6 +232,11 @@ function db_test()
     res = store:exec("SET foo2 \"hello world!\"")
     assertEqual(res, "SET foo2")
 
+    -- TODO test that it's stored internally as binary
+    res = store:exec("SET hex 0x123456")
+    res = store:exec("GET hex")
+    assertEqual(res, "0x123456")
+
     store:flush()
     store:close()
 
