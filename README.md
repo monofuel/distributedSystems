@@ -12,8 +12,10 @@
 
   - argument checking for functions
   - replication
+
     - syncronous leader & follower
-    - async leader & follower
+    - maybe async leader & follower?
+
   - partitioning
 
   - transactions?

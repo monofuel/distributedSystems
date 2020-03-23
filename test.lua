@@ -314,8 +314,9 @@ function net_test()
     coroutine.resume(server_routine)
     coroutine.resume(client_routine)
         
-    if #leader.__sockets ~= 2 then
-        error("expected client to connect. # of sockets should be 2: " .. #leader.__sockets)
+    -- sockets should be [leader_server, repl_server, client]
+    if #leader.__sockets ~= 3 then
+        error("expected client to connect. # of sockets should be 3: " .. #leader.__sockets)
     end
 end
 

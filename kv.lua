@@ -59,6 +59,10 @@ function KV_Store:new(args)
     local name = args.name
     local reset = args.reset == true
     local in_memory = args.in_memory == true
+    local role = args.role
+    if not role then
+        role = 'leader'
+    end
     local leader_port = args.leader_port
     if leader_port == nil then
         leader_port = 25600
@@ -83,6 +87,7 @@ function KV_Store:new(args)
     }
     store.WAL = {}
     store.name = name
+    store.__role = role
     store.__in_memory = in_memory
     store.__leader_port = leader_port
     store.__repl_port = repl_port
@@ -146,16 +151,29 @@ function KV_Store:listen()
     -- lua computers communicate via network components, and can't use socket
     local socket = require('socket')
 
+    local leader_server = nil
+    
     -- TODO handle leader & repl ports
-    local server = assert(socket.bind("*", self.__leader_port))
-    logDebug('Listening to port ' .. self.__leader_port)
-    server:settimeout(1)
+    if self.__role == 'leader' then
+        leader_server = assert(socket.bind("*", self.__leader_port))
+        leader_server:settimeout(1)
+        logDebug('Listening to leader port ' .. self.__leader_port)
+    end
 
-    self.__server = server;
+    local repl_server  = assert(socket.bind("*", self.__repl_port))
+    repl_server:settimeout(1)
+    logDebug('Listening to repl port ' .. self.__repl_port)
+
+    self.__leader_server = leader_server
+    self.__repl_server = repl_server
 
     local sockets = {
-        server
+        repl_server
     }
+    if leader_server then
+        table.insert(sockets, leader_server)
+    end
+
     self.__sockets = sockets;
     return coroutine.create(function()
         while 1 do
@@ -163,7 +181,7 @@ function KV_Store:listen()
             local ready = socket.select(sockets, nil, 0.2) 
 
             for _, sock in pairs(ready) do
-                if sock == server then
+                if sock == leader_server then
                     local client, err = sock:accept()
                     if client then
                         logInfo("client connected!")
