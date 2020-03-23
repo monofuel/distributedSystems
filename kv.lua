@@ -173,6 +173,8 @@ function KV_Store:listen()
     if leader_server then
         table.insert(sockets, leader_server)
     end
+    local db_clients = {}
+    local repl_clients = {}
 
     self.__sockets = sockets;
     return coroutine.create(function()
@@ -184,8 +186,18 @@ function KV_Store:listen()
                 if sock == leader_server then
                     local client, err = sock:accept()
                     if client then
-                        logInfo("client connected!")
+                        logInfo("db client connected!")
+                 
+                        table.insert(sockets, client)
+                        table.insert(db_clients, client)
+                    end
+                elseif sock == repl_server then
+                    local client, err = sock:accept()
+                    if client then
+                        logInfo("repl client connected!")
+
                         table.insert(sockets,client)
+                        table.insert(repl_clients, client)
                     end
                 else
                     -- handle client message
@@ -193,7 +205,11 @@ function KV_Store:listen()
                     if err then
                         print(err)
                     else
-                        print('client: ', line)
+                        print('client '.. sock.type ..' : ', line)
+                        if sock.type == 'repl' then
+                            local res = self:exec(line)
+                            sock:send(res)
+                        end
                     end
                 end
             end

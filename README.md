@@ -4,24 +4,25 @@
 
   - Dockerfile & docker-compose.yml for running included
 
-- simple KV store
+- simple KV store intended for [Open Computers Minecraft Mod](https://ocdoc.cil.li/tutorial:oc1_basic_computer)
+  - Networking not working yet for Open Computers
+    - currently only supports luasockets on x86
+    - need to add support for the network on Open Computers
 
-- TODO
+* TODO
 
   - Finish implementing WAL recovery after crash
 
-  - argument checking for functions
+  - function argument checking?
   - replication
 
     - syncronous leader & follower
     - maybe async leader & follower?
 
+* stretch goals
   - partitioning
-
   - transactions?
     - partitioning with transactions?
-
-- stretch goals
   - lua coroutines? io multiplexing?
   - cache proxies? orchestration?
 

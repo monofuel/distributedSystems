@@ -19,6 +19,13 @@ services:
       - leader
     volumes:
       - .:/code/
+  repl:
+    build: .
+    command: lua5.3 repl.lua  --remote leader
+    depends_on:
+      - leader
+    volumes:
+      - .:/code/
   test:
     build: .
     command: lua5.3 test.lua

@@ -118,6 +118,14 @@ function parseArgs()
                     end
                     options.name = arg[i]
                     skip_one = true
+                elseif a == "--remote" then
+                    -- only for repl.lua
+                    i = i + 1
+                    if arg[i] == nil then
+                        error("Missing hostname following --remote")
+                    end
+                    options.remote = arg[i]
+                    skip_one = true
                 elseif a == "--leader_port" then
                     i = i + 1
                     if arg[i] == nil then
