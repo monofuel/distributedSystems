@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  leader:
+    build: .
+    command: lua5.3 server.lua
+    volumes:
+      - .:/code/
+
+  test:
+    build: .
+    command: lua5.3 test.lua
+    volumes:
+      - .:/code/

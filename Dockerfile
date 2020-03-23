@@ -4,3 +4,4 @@ RUN luarocks-5.3 install luasocket
 RUN mkdir /code
 ADD . /code/
 
+WORKDIR /code
