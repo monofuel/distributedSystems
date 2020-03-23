@@ -307,11 +307,13 @@ function net_test()
     })
 
     local server_routine = leader:listen()
-    local client_routine = follower:follow()
+    local follower_listen = follower:listen()
+    local follower_routine = follower:follow()
     
     logDebug('resuming coroutines')
     routineResume(server_routine)
-    routineResume(client_routine)
+    routineResume(follower_listen)
+    routineResume(follower_routine)
         
     -- sockets should be [leader_server, repl_server, client]
     if #leader.__sockets ~= 3 then
@@ -354,7 +356,39 @@ function net_test()
         error('client receive error: ' .. err)
     end
     assertEqual(line, "0x123456")
+    client:close()
 
+    -- connect to follower REPL
+    local client, err = socket.connect('localhost', 25602)
+    if err then
+        error('failed to connect to follower REPL: ' .. err)
+    end
+    client:settimeout(1)
+    
+    logDebug('connected to follower REPL')
+    routineResume(follower_listen)
+    client:send('PING\n')
+    
+    routineResume(follower_listen)
+    local line, err = client:receive('*l')
+    if err then
+        error('client receive error: ' .. err)
+    end
+    assertEqual(line, "PONG")
+
+    -- TODO should replicate data to follower
+    -- client:send('GET FOO\n')
+    -- routineResume(follower_listen)
+    -- local line, err = client:receive('*l')
+    -- if err then
+    --     error('client receive error: ' .. err)
+    -- end
+    -- assertEqual(line, "0x123456")
+
+    client:close()
+
+    leader:close()
+    follower:close()
 end
 
 test()
