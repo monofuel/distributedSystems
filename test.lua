@@ -237,6 +237,8 @@ function db_test()
     res = store:exec("GET hex")
     assertEqual(res, "0x123456")
 
+    store:listen()
+
     store:flush()
     store:close()
 

@@ -1,7 +1,7 @@
 image: alpine
 
 before_script:
-  - apk update && apk add build-base lua5.3
+  - apk update && apk add build-base lua5.3 luarocks
 
 stages:
   - test
@@ -11,3 +11,4 @@ lua_test:
   script:
     - lua5.3 -v
     - lua5.3 test.lua
+    - cat test_scripts/test_populate.txt | lua repl.lua --memory

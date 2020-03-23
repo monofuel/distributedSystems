@@ -6,9 +6,6 @@
 - TODO
 
   - Finish WAL
-  - allow hexidecimal for passing data via repl
-
-    - not great, but it's flexible and means I don't have to parse objects
 
   - argument checking
   - replication

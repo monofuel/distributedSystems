@@ -59,6 +59,10 @@ function KV_Store:new(args)
     local name = args.name
     local reset = args.reset == true
     local in_memory = args.in_memory == true
+    local port = args.port
+    if port == nil then
+        port = 25600
+    end
 
 
     local store = setmetatable({}, { __index = KV_Store })
@@ -71,6 +75,7 @@ function KV_Store:new(args)
     store.WAL = {}
     store.name = name
     store.__in_memory = in_memory
+    store.__port = port
 
     store.wal_filepath = './test_db/' .. store.name .. '.wal'
     store.db_filepath = './test_db/' .. store.name .. '.bin'
@@ -122,6 +127,15 @@ function KV_Store:new(args)
     end
 
     return store
+end
+
+function KV_Store:listen()
+
+    -- listen on self.port
+    -- TODO support open computers
+
+    
+
 end
 
 --[[
