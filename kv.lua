@@ -241,6 +241,8 @@ end
 
 function KV_Store:follow()
 
+    -- TODO should sync WAL state with leader on connection
+
     -- TODO support open computers
     -- lua computers communicate via network components, and can't use socket
     local socket = require('socket')
@@ -256,18 +258,39 @@ function KV_Store:follow()
     return coroutine.create(function()
         while 1 do
             
-            local ready = socket.select(sockets, nil, 1) 
+            local ready = socket.select(sockets, nil, 0) 
 
-            for _, sock in pairs(ready) do
+            for _, sock in ipairs(ready) do
                 if sock == client then
-                    local line, error = client:receive()
+                    -- TODO better error handling here
+                    local line, error = client:receive('*l')
                     if error then
                         error('client receive error: ' .. error)
                     end
-                    print(line)
+                    local count = string.unpack("i", line)
+                    local buf, error = client:receive(count)
+                    if error then
+                        error('client receive error: ' .. error)
+                    end
+
+                    -- commit to local WAL
+                    if not self.__in_memory then
+                        self.wal_file:write(buf)
+                        self.wal_file:flush()
+                    end
+                    
+                    local wal_event = decode(buf, WAL_Schema)
+                    local kind = getNameForWALKind(wal_event.kind)
+                    logInfo("follower received event ID: " .. wal_event.ID .. ' kind: ' .. wal_event.kind)
+                    local schema = WAL_Schemas[kind]
+                    local value = decode(wal_event.bytes, schema)
+
+                    -- mutate internal state
+                    self:handleWAL(kind, value)
+                    logInfo('handled event ID: ' .. wal_event.ID)
                     
                 else
-                    error('unknown socket')
+                    logErr('unknown socket')
                 end
             end
 
@@ -372,11 +395,31 @@ function KV_Store:writeWAL(kind, value)
         kind = WAL_Kinds[kind],
         bytes = value_buf
     }, WAL_Schema)
+    -- TODO could refactor this with follow()
     if not self.__in_memory then
         self.wal_file:write(buf)
         self.wal_file:flush()
     end
+    
+    -- mutate internal state
     self:handleWAL(kind, value)
+
+    -- send it to followers
+    self:broadcastWAL(buf)
+end
+
+function KV_Store:broadcastWAL(buf)
+    if not self.__db_clients then
+        return
+    end
+    -- syncronously send WAL events to clients
+    -- TODO async followers?
+    for _, sock in ipairs(self.__db_clients) do
+        -- first send size of buf as an int, followed by a newline
+        -- hacky way to send arbitrary binary data with luasockets
+        sock:send(intToBytes(#buf) .. '\n')
+        sock:send(buf)
+    end
 end
 
 function KV_Store:replayWAL()

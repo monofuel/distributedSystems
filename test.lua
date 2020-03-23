@@ -343,6 +343,7 @@ function net_test()
 
     client:send('SET FOO 0x123456\n')
     routineResume(server_routine)
+    routineResume(follower_routine)
     local line, err = client:receive('*l')
     if err then
         error('client receive error: ' .. err)
@@ -376,14 +377,14 @@ function net_test()
     end
     assertEqual(line, "PONG")
 
-    -- TODO should replicate data to follower
-    -- client:send('GET FOO\n')
-    -- routineResume(follower_listen)
-    -- local line, err = client:receive('*l')
-    -- if err then
-    --     error('client receive error: ' .. err)
-    -- end
-    -- assertEqual(line, "0x123456")
+    client:send('GET FOO\n')
+    routineResume(follower_listen)
+    local line, err = client:receive('*l')
+    if err then
+        error('client receive error: ' .. err)
+    end
+    assertEqual(line, "0x123456")
+    logDebug("got " .. line .. " from follower!")
 
     client:close()
 

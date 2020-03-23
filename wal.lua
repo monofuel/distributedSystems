@@ -12,6 +12,15 @@ WAL_Kinds = {
     delete = 4
 }
 
+-- TODO should refactor WAL_Kinds to be something reasonable
+function getNameForWALKind(kind)
+    for k, v in pairs(WAL_Kinds) do
+        if kind == v then
+            return k
+        end
+    end
+end
+
 WAL_Schema = {
     type = "WAL",
     fields = {
