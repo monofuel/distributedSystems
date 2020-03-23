@@ -14,8 +14,10 @@ function startServer()
         end
     else
         local follow_routine = store:follow()
+        local repl_routine = store:listen()
         while 1 do
             coroutine.resume(follow_routine)
+            coroutine.resume(repl_routine)
         end
     end
 end
