@@ -1,14 +1,19 @@
 # Distributed Systems
 
-- simple KV
-- store
+- requires luasocket (installed with luarocks)
+
+  - Dockerfile & docker-compose.yml for running included
+
+- simple KV store
 
 - TODO
 
-  - Finish WAL
+  - Finish implementing WAL recovery after crash
 
-  - argument checking
+  - argument checking for functions
   - replication
+    - syncronous leader & follower
+    - async leader & follower
   - partitioning
 
   - transactions?

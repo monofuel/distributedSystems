@@ -96,7 +96,7 @@ function KV_Store:new(args)
             if store.db_file ~= nil then
                 db_buf = store.db_file:read("*a")
             end
-            if db_buf ~= nil then
+            if db_buf ~= nil and #db_buf ~= 0 then
                 local db = decode(db_buf, KV_Schema)
 
                 for k1, v1 in pairs(db.tables) do
@@ -131,10 +131,93 @@ end
 
 function KV_Store:listen()
 
-    -- listen on self.port
     -- TODO support open computers
+    -- lua computers communicate via network components, and can't use socket
+    local socket = require('socket')
 
-    
+    local server = assert(socket.bind("*", self.__port))
+    logDebug('Listening to port ' .. self.__port)
+    server:settimeout(1)
+
+    self.__server = server;
+
+    local sockets = {
+        server
+    }
+
+    return coroutine.create(function()
+        while 1 do
+            
+            local ready = socket.select(sockets, nil, 1) 
+
+            for _, sock in pairs(ready) do
+                if sock == server then
+                    local client, err = sock:accept()
+                    if client then
+                        logInfo("client connected!")
+                        sockets.insert(client)
+                    end
+                else
+                    -- handle client message
+                    local line, err = sock:receive()
+                    if err then
+                        print(err)
+                    else
+                        print('client: ', line)
+                    end
+                end
+            end
+
+            -- local line, err = client:receive()
+            -- if not err then 
+            
+            -- end
+            -- client:close()
+            coroutine.yield()
+        end
+    end)
+end
+
+function KV_Store:follow()
+
+    -- TODO support open computers
+    -- lua computers communicate via network components, and can't use socket
+    local socket = require('socket')
+
+    -- TODO don't hard code this stuff
+    local client, err = socket.connect('leader', 25600)
+    if err then
+        error('failed to connect to leader: ' .. err)
+    end
+    logInfo('connected to leader!')
+    self.__client = client
+    local sockets = { client }
+    return coroutine.create(function()
+        while 1 do
+            
+            local ready = socket.select(sockets, nil, 1) 
+
+            for _, sock in pairs(ready) do
+                if sock == client then
+                    local line, error = client:receive()
+                    if error then
+                        error('client receive error: ' .. error)
+                    end
+                    print(line)
+                    
+                else
+                    error('unknown socket')
+                end
+            end
+
+            -- local line, err = client:receive()
+            -- if not err then 
+            
+            -- end
+            -- client:close()
+            coroutine.yield()
+        end
+    end)
 
 end
 

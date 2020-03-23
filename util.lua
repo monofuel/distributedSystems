@@ -93,7 +93,8 @@ function parseArgs()
         name = "repl_test",
         in_memory = false,
         reset = false,
-        port = 25600
+        port = 25600,
+        role = 'leader'
     }
    
     if #arg > 0 then
@@ -122,7 +123,16 @@ function parseArgs()
                     end
                     options.port = tonumber(arg[i])
                     skip_one = true
-                
+                elseif a == "--role" then
+                i = i + 1
+                if arg[i] == nil then
+                    error("Missing [leader, follower] following --role")
+                end
+                options.role = arg[i]
+                if options.role ~= 'leader' and options.role ~= 'follower' then
+                    error('invalid role: ' .. options.role)
+                end
+                skip_one = true
                 end
             end
         end
