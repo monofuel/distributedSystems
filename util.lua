@@ -1,9 +1,12 @@
 
-function assertEqual(v1, v2)
+function assertEqual(v1, v2, depth)
+    if not depth then
+        depth = 1
+    end
     local t1 = type(v1)
     local t2 = type(v2)
     if (t1 ~= t2) then
-        error('got different values: "' .. toPrettyPrint(v1) ..'" : "'..  toPrettyPrint(v2) .. '"')
+        error('got different values: "' .. toPrettyPrint(v1) ..'" : "'..  toPrettyPrint(v2) .. '"', depth)
     end
 
     if (v1 ~= v2) then
@@ -11,17 +14,17 @@ function assertEqual(v1, v2)
             -- recurse into both tables
             for k, v in pairs(v1) do
                 
-                assertEqual(v1[k], v2[k])
+                assertEqual(v1[k], v2[k], depth + 1)
             end
             for k, v in pairs(v2) do
                 if v1[k] == nil and v2[k] ~= nil then
-                    error('v1 is missing value for key '.. k)
+                    error('v1 is missing value for key '.. k, depth)
                 end
             end
         else
             print(v1)
             print(v2)
-            error('got different values: "' .. toPrettyPrint(v1) ..'" : "'..  toPrettyPrint(v2) .. '"')
+            error('got different values: "' .. toPrettyPrint(v1) ..'" : "'..  toPrettyPrint(v2) .. '"', depth)
         end
     end    
 end
@@ -70,17 +73,23 @@ function tokenize(str)
     local res = {}
     local quoted_str = nil
     for sub_str in string.gmatch(str, '[^ ]*') do
-        if string.match(sub_str, "^\"") then
-            quoted_str = sub_str
-        elseif quoted_str ~= nil then
-            quoted_str = quoted_str .. " " .. sub_str
-        else
-            table.insert(res, sub_str)
-        end
 
-        if string.match(sub_str, "\"$") then
-            table.insert(res, quoted_str)
-            quoted_str = nil
+        -- NB regex matching in opencomputers seems to add empty strings??
+        -- not sure what regex system it uses
+        
+        if #sub_str ~= 0 then
+            if string.match(sub_str, "^\"") then
+                quoted_str = sub_str
+            elseif quoted_str ~= nil then
+                quoted_str = quoted_str .. " " .. sub_str
+            else
+                table.insert(res, sub_str)
+            end
+
+            if string.match(sub_str, "\"$") then
+                table.insert(res, quoted_str)
+                quoted_str = nil
+            end
         end
         
     end
@@ -183,7 +192,7 @@ function assertNotNil(v, msg)
         else
             msg = ": " .. msg
         end
-        error("expected value to not be nil" .. msg)
+        error("expected value to not be nil" .. msg, 2)
     end
 end
 

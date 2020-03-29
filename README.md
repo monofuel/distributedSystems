@@ -43,6 +43,8 @@ http://lua-users.org/files/wiki_insecure/users/thomasl/luarefv51single.pdf
   - you can change the architecture by holding a CPU in hand and shift right clicking
   - or you can change your open computers config to default to 5.3
 
+- open computers defaults to `filesystem.bufferChanges=true` which means data commited to disk in Minecraft may not be commited on the real physical drive.
+
 # Naming
 
 - snake_case for variables/functions
