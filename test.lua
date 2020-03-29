@@ -7,6 +7,9 @@ require('./util')
 
 function test()
 
+    logInfo("Using Open Computers: " .. tostring(isOC()))
+    assertNotNil(5)
+
     assertEqual(intToBytes(5) , fromhex('05000000'))
     
     assertEqual(doubleToBytes(5.5), fromhex('0000000000001640'))

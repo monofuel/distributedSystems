@@ -46,9 +46,8 @@ end
 -- Lua uses doubles, so this only works nice for numbers < 2^53
 -- truncates the remainder if it is not a number
 function intToBytes(n) 
-    if (math.type(n) == 'nil') then
-        error("n is not a number: " .. n)
-    elseif (math.type(n) == 'float') then
+    assertNotNil(n)
+    if (math.type(n) == 'float') then
         n = math.floor(n)
     end
 
@@ -175,4 +174,20 @@ function routineResume(routine, msg)
     if err then
         logErr(msg .. err)
     end
+end
+
+function assertNotNil(v, msg)
+    if not v then
+        if not msg then
+            msg = ""
+        else
+            msg = ": " .. msg
+        end
+        error("expected value to not be nil" .. msg)
+    end
+end
+
+function isOC()
+    -- assume we are on open computers if the component package is loaded
+    return not not package.loaded.component
 end
