@@ -39,6 +39,8 @@ http://lua-users.org/files/wiki_insecure/users/thomasl/luarefv51single.pdf
 - https://www.lua.org/manual/5.3/manual.html#6.4.2
   - string.pack and string.unpack are AWESOME
 
+https://ocdoc.cil.li/component:modem
+
 - open computers needs to be set to 5.3!
   - you can change the architecture by holding a CPU in hand and shift right clicking
   - or you can change your open computers config to default to 5.3

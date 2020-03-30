@@ -323,73 +323,77 @@ function net_test()
         error("expected client to connect. # of db_clients should be 1: " .. #leader.__db_clients)
     end
 
-    -- TODO OpenComputers Networking
-    local socket = require('socket')
+    if isOC() then
+        -- TODO OpenComputers Networking
+        logWarn('repl test not implemented for open computers')
+    else
+        local socket = require('socket')
 
-    -- connect to leader REPL
-    local client, err = socket.connect('localhost', 25601)
-    if err then
-        error('failed to connect to leader REPL: ' .. err)
-    end
-    client:settimeout(1)
-    
-    logDebug('connected to leader REPL')
-    routineResume(server_routine)
-    client:send('PING\n')
-    
-    routineResume(server_routine)
-    local line, err = client:receive('*l')
-    if err then
-        error('client receive error: ' .. err)
-    end
-    assertEqual(line, "PONG")
+        -- connect to leader REPL
+        local client, err = socket.connect('localhost', 25601)
+        if err then
+            error('failed to connect to leader REPL: ' .. err)
+        end
+        client:settimeout(1)
+        
+        logDebug('connected to leader REPL')
+        routineResume(server_routine)
+        client:send('PING\n')
+        
+        routineResume(server_routine)
+        local line, err = client:receive('*l')
+        if err then
+            error('client receive error: ' .. err)
+        end
+        assertEqual(line, "PONG")
 
-    client:send('SET FOO 0x123456\n')
-    routineResume(server_routine)
-    routineResume(follower_routine)
-    local line, err = client:receive('*l')
-    if err then
-        error('client receive error: ' .. err)
-    end
-    assertEqual(line, "SET FOO")
+        client:send('SET FOO 0x123456\n')
+        routineResume(server_routine)
+        routineResume(follower_routine)
+        local line, err = client:receive('*l')
+        if err then
+            error('client receive error: ' .. err)
+        end
+        assertEqual(line, "SET FOO")
 
-    client:send('GET FOO\n')
-    routineResume(server_routine)
-    local line, err = client:receive('*l')
-    if err then
-        error('client receive error: ' .. err)
-    end
-    assertEqual(line, "0x123456")
-    client:close()
+        client:send('GET FOO\n')
+        routineResume(server_routine)
+        local line, err = client:receive('*l')
+        if err then
+            error('client receive error: ' .. err)
+        end
+        assertEqual(line, "0x123456")
+        client:close()
 
-    -- connect to follower REPL
-    local client, err = socket.connect('localhost', 25602)
-    if err then
-        error('failed to connect to follower REPL: ' .. err)
-    end
-    client:settimeout(1)
-    
-    logDebug('connected to follower REPL')
-    routineResume(follower_listen)
-    client:send('PING\n')
-    
-    routineResume(follower_listen)
-    local line, err = client:receive('*l')
-    if err then
-        error('client receive error: ' .. err)
-    end
-    assertEqual(line, "PONG")
+        -- connect to follower REPL
+        local client, err = socket.connect('localhost', 25602)
+        if err then
+            error('failed to connect to follower REPL: ' .. err)
+        end
+        client:settimeout(1)
+        
+        logDebug('connected to follower REPL')
+        routineResume(follower_listen)
+        client:send('PING\n')
+        
+        routineResume(follower_listen)
+        local line, err = client:receive('*l')
+        if err then
+            error('client receive error: ' .. err)
+        end
+        assertEqual(line, "PONG")
 
-    client:send('GET FOO\n')
-    routineResume(follower_listen)
-    local line, err = client:receive('*l')
-    if err then
-        error('client receive error: ' .. err)
-    end
-    assertEqual(line, "0x123456")
-    logDebug("got " .. line .. " from follower!")
+        client:send('GET FOO\n')
+        routineResume(follower_listen)
+        local line, err = client:receive('*l')
+        if err then
+            error('client receive error: ' .. err)
+        end
+        assertEqual(line, "0x123456")
+        logDebug("got " .. line .. " from follower!")
 
-    client:close()
+        client:close()
+    end
 
     leader:close()
     follower:close()

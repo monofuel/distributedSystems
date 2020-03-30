@@ -145,7 +145,43 @@ function KV_Store:new(args)
     return store
 end
 
+-- TODO this should be abstracted better
 function KV_Store:listen()
+    if isOC() then
+        return self:listen_oc()
+    else
+        return self:listen_x86()
+    end
+end
+
+function KV_Store:listen_oc()
+    local component = require("component")
+    local event = require("event")
+
+    local m = component.modem
+    logInfo("modem address: " .. m.address)
+
+    if self.__role == 'leader' then
+        assert(m.open(self.__leader_port))
+        logDebug('Listening to leader port ' .. self.__leader_port)
+    end
+
+    assert(m.open(self.__repl_port))
+    logDebug('Listening to repl port ' .. self.__repl_port)
+
+
+    return coroutine.create(function()
+        while 1 do
+
+            local _, _, from, port, _, message = event.pull("modem_message")
+            print("Got a message from " .. from .. " on port " .. port .. ": " .. tostring(message))
+
+            coroutine.yield()
+        end
+    end)
+end
+
+function KV_Store:listen_x86()
 
     -- TODO maybe could just listen on 1 port everything?
 
