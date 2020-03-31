@@ -240,8 +240,8 @@ function db_test()
     res = store:exec("GET hex")
     assertEqual(res, "0x123456")
 
-    local listen_routine = store:listen()
-    coroutine.resume(listen_routine)
+    store:listen()
+    store:tick()
 
     store:flush()
     store:close()
@@ -309,18 +309,18 @@ function net_test()
         leader_host = 'localhost'
     })
 
-    local server_routine = leader:listen()
-    local follower_listen = follower:listen()
-    local follower_routine = follower:follow()
+    leader:listen()
+    follower:listen()
+    follower:follow()
     
     logDebug('resuming coroutines')
-    routineResume(server_routine)
-    routineResume(follower_listen)
-    routineResume(follower_routine)
+    leader:tick()
+    follower:tick()
         
     -- sockets should be [leader_server, repl_server, client]
-    if #leader.__db_clients ~= 1 then
-        error("expected client to connect. # of db_clients should be 1: " .. #leader.__db_clients)
+    local followerCount = leader.net:countFollowers()
+    if followerCount ~= 1 then
+        error("expected client to connect. # of db_clients should be 1: " .. followerCount)
     end
 
     if isOC() then
@@ -337,10 +337,10 @@ function net_test()
         client:settimeout(1)
         
         logDebug('connected to leader REPL')
-        routineResume(server_routine)
+        leader:tick()
         client:send('PING\n')
         
-        routineResume(server_routine)
+        leader:tick()
         local line, err = client:receive('*l')
         if err then
             error('client receive error: ' .. err)
@@ -348,8 +348,8 @@ function net_test()
         assertEqual(line, "PONG")
 
         client:send('SET FOO 0x123456\n')
-        routineResume(server_routine)
-        routineResume(follower_routine)
+        leader:tick()
+        follower:tick()
         local line, err = client:receive('*l')
         if err then
             error('client receive error: ' .. err)
@@ -357,7 +357,7 @@ function net_test()
         assertEqual(line, "SET FOO")
 
         client:send('GET FOO\n')
-        routineResume(server_routine)
+        leader:tick()
         local line, err = client:receive('*l')
         if err then
             error('client receive error: ' .. err)
@@ -373,10 +373,10 @@ function net_test()
         client:settimeout(1)
         
         logDebug('connected to follower REPL')
-        routineResume(follower_listen)
+        follower:tick()
         client:send('PING\n')
         
-        routineResume(follower_listen)
+        follower:tick()
         local line, err = client:receive('*l')
         if err then
             error('client receive error: ' .. err)
@@ -384,7 +384,7 @@ function net_test()
         assertEqual(line, "PONG")
 
         client:send('GET FOO\n')
-        routineResume(follower_listen)
+        follower:tick()
         local line, err = client:receive('*l')
         if err then
             error('client receive error: ' .. err)

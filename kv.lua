@@ -2,6 +2,7 @@ require('./schema')
 require('./wal')
 require('./util')
 require('./encoder')
+require('./net')
 
 -- Key Value Store
 
@@ -142,207 +143,27 @@ function KV_Store:new(args)
         end
     end
 
+    store.net = Net_Service:new()
+
     return store
 end
 
--- TODO this should be abstracted better
+-- function to tick each network coroutine
+function KV_Store:tick()
+    self.net:tick()
+end
+
 function KV_Store:listen()
-    if isOC() then
-        return self:listen_oc()
-    else
-        return self:listen_x86()
-    end
-end
-
-function KV_Store:listen_oc()
-    local component = require("component")
-    local event = require("event")
-
-    local m = component.modem
-    logInfo("modem address: " .. m.address)
-
     if self.__role == 'leader' then
-        assert(m.open(self.__leader_port))
+        self.net:leaderListen(self.__leader_port)
         logDebug('Listening to leader port ' .. self.__leader_port)
     end
-
-    assert(m.open(self.__repl_port))
+    self.net:replListen(self.__repl_port, self)
     logDebug('Listening to repl port ' .. self.__repl_port)
-
-
-    return coroutine.create(function()
-        while 1 do
-
-            local _, _, from, port, _, message = event.pull("modem_message")
-            print("Got a message from " .. from .. " on port " .. port .. ": " .. tostring(message))
-
-            coroutine.yield()
-        end
-    end)
-end
-
-function KV_Store:listen_x86()
-
-    -- TODO maybe could just listen on 1 port everything?
-
-    -- TODO support open computers
-    -- lua computers communicate via network components, and can't use socket
-    local socket = require('socket')
-
-    local leader_server = nil
-    
-    -- TODO handle leader & repl ports
-    if self.__role == 'leader' then
-        leader_server = assert(socket.bind("*", self.__leader_port))
-        leader_server:settimeout(1)
-        logDebug('Listening to leader port ' .. self.__leader_port)
-    end
-
-    local repl_server  = assert(socket.bind("*", self.__repl_port))
-    repl_server:settimeout(1)
-    logDebug('Listening to repl port ' .. self.__repl_port)
-
-    self.__leader_server = leader_server
-    self.__repl_server = repl_server
-
-    local sockets = {
-        repl_server
-    }
-    if leader_server then
-        table.insert(sockets, leader_server)
-    end
-    local db_clients = {}
-    local repl_clients = {}
-
-    self.__sockets = sockets
-    self.__db_clients = db_clients
-    self.__repl_clients = repl_clients
-    return coroutine.create(function()
-        while 1 do
-            local ready = socket.select(sockets, nil, 0) 
-
-            for _, sock in ipairs(ready) do
-                if sock == leader_server then
-                    local client, err = sock:accept()
-                   
-                    if err then
-                        logErr('error accepting follower: ' .. err)
-                    else
-                        logInfo("db client connected!")
-                 
-                        table.insert(db_clients, client)
-                    end
-                elseif sock == repl_server then
-                    local client, err = sock:accept()
-
-                    if err then
-                        logErr('error accepting repl client: ' .. err)
-                    else
-                        logInfo("repl client connected!")
-
-                        table.insert(repl_clients, client)
-                    end
-                end
-            end
-
-            ready = socket.select(repl_clients, nil, 0) 
-
-            for _, sock in ipairs(ready) do
-                -- REPL clients
-                local line, err = sock:receive('*l')
-                
-                    if err then
-                        if err == 'closed' then
-                            logErr('client closed')
-                            table.remove(repl_clients, sock)
-                        else
-                            logErr('error receiving from repl client: ' .. err)
-                        end
-                    else
-                        logInfo('client request: ' .. line)
-                        local res = self:exec(line)
-                        sock:send(res .. '\n')
-                        
-                    end
-            end
-
-            ready = socket.select(db_clients, nil, 0) 
-
-            for _, sock in ipairs(ready) do
-                -- DB clients
-                -- TODO should handle populating followers on startup
-                 
-            end
-
-            coroutine.yield()
-        end
-    end)
 end
 
 function KV_Store:follow()
-
-    -- TODO should sync WAL state with leader on connection
-
-    -- TODO support open computers
-    -- lua computers communicate via network components, and can't use socket
-    local socket = require('socket')
-
-    local client, err = socket.connect(self.__leader_host, self.__leader_port)
-    if err then
-        error('failed to connect to leader: ' .. err)
-    end
-    logInfo('connected to leader!')
-    self.__client = client
-    local sockets = { client }
-    self.__sockets = sockets
-    return coroutine.create(function()
-        while 1 do
-            
-            local ready = socket.select(sockets, nil, 0) 
-
-            for _, sock in ipairs(ready) do
-                if sock == client then
-                    -- TODO better error handling here
-                    local line, error = client:receive('*l')
-                    if error then
-                        error('client receive error: ' .. error)
-                    end
-                    local count = string.unpack("i", line)
-                    local buf, error = client:receive(count)
-                    if error then
-                        error('client receive error: ' .. error)
-                    end
-
-                    -- commit to local WAL
-                    if not self.__in_memory then
-                        self.wal_file:write(buf)
-                        self.wal_file:flush()
-                    end
-                    
-                    local wal_event = decode(buf, WAL_Schema)
-                    local kind = getNameForWALKind(wal_event.kind)
-                    logInfo("follower received event ID: " .. wal_event.ID .. ' kind: ' .. wal_event.kind)
-                    local schema = WAL_Schemas[kind]
-                    local value = decode(wal_event.bytes, schema)
-
-                    -- mutate internal state
-                    self:handleWAL(kind, value)
-                    logInfo('handled event ID: ' .. wal_event.ID)
-                    
-                else
-                    logErr('unknown socket')
-                end
-            end
-
-            -- local line, err = client:receive()
-            -- if not err then 
-            
-            -- end
-            -- client:close()
-            coroutine.yield()
-        end
-    end)
-
+    self.net:follow(self.__leader_host, self.__leader_port, self)
 end
 
 --[[
@@ -449,17 +270,7 @@ function KV_Store:writeWAL(kind, value)
 end
 
 function KV_Store:broadcastWAL(buf)
-    if not self.__db_clients then
-        return
-    end
-    -- syncronously send WAL events to clients
-    -- TODO async followers?
-    for _, sock in ipairs(self.__db_clients) do
-        -- first send size of buf as an int, followed by a newline
-        -- hacky way to send arbitrary binary data with luasockets
-        sock:send(intToBytes(#buf) .. '\n')
-        sock:send(buf)
-    end
+   self.net:broadcastFollowers(buf)
 end
 
 function KV_Store:replayWAL()
@@ -512,11 +323,8 @@ function KV_Store:flush()
 end
 
 function KV_Store:close()
-    local sockets = self.__sockets
-    if sockets then
-        for _, sock in pairs(sockets) do
-            sock:close()
-        end
+    if self.net then
+        self.net:close()
     end
     self:flush()
     if not self.__in_memory then

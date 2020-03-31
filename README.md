@@ -14,7 +14,8 @@
 * TODO
 
   - Finish implementing WAL recovery after crash
-
+  - currently inter-db communication and repl communication happen on separate ports
+    - this could probably be simplified to 1 port, with a proper protocol
   - function argument checking?
 
     - maybe async leader & follower?
@@ -46,6 +47,7 @@ https://ocdoc.cil.li/component:modem
   - or you can change your open computers config to default to 5.3
 
 - open computers defaults to `filesystem.bufferChanges=true` which means data commited to disk in Minecraft may not be commited on the real physical drive.
+  - there's a max size for network packets, should handle that
 
 # Naming
 
