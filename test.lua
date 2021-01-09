@@ -1,9 +1,11 @@
+package.path = 'luacrafts/?.lua;' .. package.path
+
+require('./util')
 require('./encoder')
 require('./schema')
 require('./wal')
 require('./kv')
 require('./logging')
-require('./util')
 
 function test()
 
