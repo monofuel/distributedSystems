@@ -1,0 +1,3 @@
+[submodule "luacrafts"]
+	path = luacrafts
+	url = git@gitlab.com:monofuel34089/luacrafts.git
