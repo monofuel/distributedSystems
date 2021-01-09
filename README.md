@@ -13,6 +13,10 @@
 
 * TODO
 
+  - moving general code into luacrafts/
+    - this repo was specifically for distributed systems
+    - luacrafts will be for general minecraft / open computers projects
+
   - Finish implementing WAL recovery after crash
   - currently inter-db communication and repl communication happen on separate ports
     - this could probably be simplified to 1 port, with a proper protocol
