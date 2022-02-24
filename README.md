@@ -1,5 +1,7 @@
 # Distributed Systems
 
+- UPDATE: project dev is now going on over at https://gitlab.com/monofuel34089/luacrafts
+
 - requires lua 5.3
 - requires luasocket (installed with luarocks)
 
